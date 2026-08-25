@@ -1,2020 +1,953 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard de Control de Transporte</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            color: #2c3e50;
-            min-height: 100vh;
-            font-weight: 400;
-        }
-
-        .container {
-            max-width: 1600px;
-            margin: 0 auto;
-            padding: 24px;
-        }
-
-        .error-banner {
-            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
-            color: white;
-            padding: 16px 24px;
-            border-radius: 8px;
-            margin-bottom: 24px;
-            display: none;
-            align-items: center;
-            gap: 12px;
-            box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
-        }
-
-        .success-banner {
-            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
-            color: white;
-            padding: 16px 24px;
-            border-radius: 8px;
-            margin-bottom: 24px;
-            display: none;
-            align-items: center;
-            gap: 12px;
-            box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
-        }
-
-        /* Header */
-        .header {
-            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-            border-radius: 12px;
-            padding: 28px 36px;
-            margin-bottom: 32px;
-            box-shadow: 0 8px 32px rgba(44, 62, 80, 0.15);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .company-icon {
-            width: 56px;
-            height: 56px;
-            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 28px;
-            box-shadow: 0 4px 16px rgba(52, 152, 219, 0.3);
-        }
-
-        .header-info h1 {
-            font-size: 32px;
-            font-weight: 700;
-            color: white;
-            margin-bottom: 6px;
-            letter-spacing: -0.5px;
-        }
-
-        .header-subtitle {
-            color: rgba(255, 255, 255, 0.85);
-            font-size: 15px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-weight: 500;
-        }
-
-        .status-dot {
-            width: 10px;
-            height: 10px;
-            background: #27ae60;
-            border-radius: 50%;
-            box-shadow: 0 0 8px rgba(39, 174, 96, 0.6);
-        }
-
-        .status-dot.disconnected {
-            background: #e74c3c;
-            box-shadow: 0 0 8px rgba(231, 76, 60, 0.6);
-        }
-
-        .header-right {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-        }
-
-        .update-btn, .config-btn {
-            background: rgba(255, 255, 255, 0.15);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.25);
-            padding: 12px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
-        }
-
-        .update-btn:hover, .config-btn:hover {
-            background: rgba(255, 255, 255, 0.25);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-        }
-
-        /* Configuration Modal */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-        }
-
-        .modal-content {
-            background-color: white;
-            margin: 5% auto;
-            padding: 30px;
-            border-radius: 20px;
-            width: 90%;
-            max-width: 600px;
-            box-shadow: 0 10px 50px rgba(0,0,0,0.3);
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .modal-header h2 {
-            color: #333;
-            font-size: 24px;
-            font-weight: 700;
-        }
-
-        .close {
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-            color: #999;
-        }
-
-        .close:hover {
-            color: #333;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 600;
-            color: #333;
-        }
-
-        .form-group input, .form-group textarea {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
-            font-size: 14px;
-            transition: border-color 0.3s ease;
-        }
-
-        .form-group input:focus, .form-group textarea:focus {
-            outline: none;
-            border-color: #6366f1;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-            color: white;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
-        }
-
-        /* Navigation Tabs */
-        .nav-tabs {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 32px;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 12px;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .nav-tab {
-            padding: 16px 24px;
-            background: transparent;
-            color: #64748b;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 15px;
-            transition: all 0.3s ease;
-            flex: 1;
-            text-align: center;
-            letter-spacing: 0.25px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .nav-tab:hover {
-            color: #2c3e50;
-            background: rgba(44, 62, 80, 0.05);
-        }
-
-        .nav-tab.active {
-            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-            color: white;
-            box-shadow: 0 4px 16px rgba(44, 62, 80, 0.3);
-            transform: translateY(-1px);
-        }
-
-        .nav-tab.active::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, #3498db, #2980b9);
-        }
-
-        /* Main Metrics */
-        .main-metrics {
-            display: grid;
-            grid-template-columns: auto 1fr auto 1fr auto;
-            gap: 32px;
-            margin-bottom: 32px;
-            background: rgba(255, 255, 255, 0.98);
-            padding: 40px;
-            border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-            align-items: center;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(10px);
-        }
-
-        .score-circle {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            position: relative;
-        }
-
-        .circle-progress {
-            width: 140px;
-            height: 140px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            background: conic-gradient(#27ae60 0deg, #27ae60 var(--progress), #ecf0f1 var(--progress), #ecf0f1 360deg);
-            box-shadow: 0 8px 24px rgba(39, 174, 96, 0.2);
-        }
-
-        .circle-inner {
-            width: 110px;
-            height: 110px;
-            background: white;
-            border-radius: 50%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        .score-value {
-            font-size: 38px;
-            font-weight: 800;
-            color: #27ae60;
-            line-height: 1;
-        }
-
-        .score-label {
-            font-size: 12px;
-            color: #7f8c8d;
-            margin-top: 4px;
-            font-weight: 600;
-            letter-spacing: 1px;
-        }
-
-        .excellence-badge {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            margin-top: 16px;
-            background: linear-gradient(135deg, #27ae60, #229954);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 600;
-            box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
-        }
-
-        .main-metric {
-            text-align: center;
-            position: relative;
-        }
-
-        .metric-value-large {
-            font-size: 42px;
-            font-weight: 800;
-            margin-bottom: 8px;
-            line-height: 1;
-            letter-spacing: -1px;
-        }
-
-        .metric-label-large {
-            font-size: 16px;
-            color: #7f8c8d;
-            font-weight: 600;
-            line-height: 1.3;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .blue { color: #3498db; }
-        .green { color: #27ae60; }
-        .purple { color: #8e44ad; }
-
-        /* Secondary Metrics */
-        .secondary-metrics {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 20px;
-            margin-bottom: 32px;
-        }
-
-        .metric-card {
-            background: rgba(255, 255, 255, 0.98);
-            border-radius: 12px;
-            padding: 24px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-            position: relative;
-            border-left: 4px solid transparent;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            transition: all 0.3s ease;
-        }
-
-        .metric-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-        }
-
-        .metric-card.blue-border { border-left-color: #3498db; }
-        .metric-card.green-border { border-left-color: #27ae60; }
-        .metric-card.orange-border { border-left-color: #f39c12; }
-        .metric-card.purple-border { border-left-color: #8e44ad; }
-        .metric-card.red-border { border-left-color: #e74c3c; }
-        .metric-card.pink-border { border-left-color: #e91e63; }
-
-        .metric-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 20px;
-            font-size: 20px;
-            color: white;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-        }
-
-        .metric-icon.blue { background: linear-gradient(135deg, #3498db, #2980b9); }
-        .metric-icon.green { background: linear-gradient(135deg, #27ae60, #229954); }
-        .metric-icon.orange { background: linear-gradient(135deg, #f39c12, #e67e22); }
-        .metric-icon.purple { background: linear-gradient(135deg, #8e44ad, #7d3c98); }
-        .metric-icon.red { background: linear-gradient(135deg, #e74c3c, #c0392b); }
-        .metric-icon.pink { background: linear-gradient(135deg, #e91e63, #ad1457); }
-
-        .metric-number {
-            font-size: 32px;
-            font-weight: 800;
-            margin-bottom: 8px;
-            line-height: 1;
-            color: #2c3e50;
-        }
-
-        .metric-title {
-            font-size: 14px;
-            color: #7f8c8d;
-            font-weight: 600;
-            margin-bottom: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .metric-meta {
-            font-size: 12px;
-            color: #95a5a6;
-            font-weight: 500;
-        }
-
-        .trend-indicator {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            font-size: 11px;
-            font-weight: 600;
-            padding: 4px 8px;
-            border-radius: 12px;
-            margin-left: 6px;
-        }
-
-        .trend-up {
-            background: rgba(39, 174, 96, 0.15);
-            color: #27ae60;
-        }
-
-        /* Charts Section */
-        .charts-section {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
-            margin-bottom: 32px;
-        }
-
-        .chart-container {
-            background: rgba(255, 255, 255, 0.98);
-            border-radius: 16px;
-            padding: 32px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-            position: relative;
-            overflow: hidden;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .chart-title {
-            font-size: 20px;
-            font-weight: 700;
-            color: #2c3e50;
-            margin-bottom: 24px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            letter-spacing: -0.25px;
-        }
-
-        .chart-canvas {
-            height: 300px !important;
-            width: 100% !important;
-            max-height: 300px;
-            position: relative;
-        }
-
-        /* Comparative Section */
-        .comparative-section {
-            margin-bottom: 32px;
-        }
-
-        .section-title {
-            font-size: 28px;
-            font-weight: 800;
-            color: #2c3e50;
-            margin-bottom: 24px;
-            letter-spacing: -0.5px;
-        }
-
-        .comparative-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 24px;
-        }
-
-        .comparative-card {
-            background: rgba(255, 255, 255, 0.98);
-            border-radius: 16px;
-            padding: 32px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-            border: 2px solid transparent;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .comparative-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, var(--card-color, #bdc3c7), var(--card-color, #95a5a6));
-            opacity: 0.7;
-        }
-
-        .comparative-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
-        }
-
-        .comparative-card.current {
-            border-color: #2c3e50;
-            box-shadow: 0 12px 48px rgba(44, 62, 80, 0.2);
-            transform: translateY(-2px);
-        }
-
-        .card-header {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            margin-bottom: 24px;
-        }
-
-        .card-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 24px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-        }
-
-        .card-info h3 {
-            font-size: 20px;
-            font-weight: 800;
-            color: #2c3e50;
-            margin-bottom: 8px;
-            letter-spacing: -0.25px;
-        }
-
-        .performance-badge {
-            padding: 6px 16px;
-            border-radius: 16px;
-            font-size: 13px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .excellent {
-            background: linear-gradient(135deg, #27ae60, #229954);
-            color: white;
-        }
-
-        .good {
-            background: linear-gradient(135deg, #3498db, #2980b9);
-            color: white;
-        }
-
-        .card-score {
-            font-size: 56px;
-            font-weight: 900;
-            text-align: right;
-            margin-bottom: 24px;
-            line-height: 1;
-            letter-spacing: -2px;
-        }
-
-        .card-metrics {
-            display: flex;
-            justify-content: space-between;
-            gap: 24px;
-        }
-
-        .card-metric {
-            text-align: center;
-            flex: 1;
-        }
-
-        .card-metric-label {
-            font-size: 13px;
-            color: #7f8c8d;
-            margin-bottom: 8px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .card-metric-value {
-            font-size: 20px;
-            font-weight: 800;
-            color: #2c3e50;
-            line-height: 1;
-        }
-
-        /* Footer */
-        .footer {
-            background: white;
-            border-radius: 20px;
-            padding: 20px 30px;
-            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-
-        .connection-status {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: #4CAF50;
-            font-weight: 500;
-        }
-
-        .connection-status.disconnected {
-            color: #ef4444;
-        }
-
-        .data-sources {
-            font-size: 14px;
-            color: #666;
-        }
-
-        .last-update {
-            font-size: 12px;
-            color: #999;
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .main-metrics {
-                grid-template-columns: 1fr;
-                gap: 20px;
-                text-align: center;
-            }
-
-            .charts-section {
-                grid-template-columns: 1fr;
-            }
-
-            .nav-tabs {
-                flex-direction: column;
-            }
-
-            .comparative-cards {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .updating {
-            opacity: 0.7;
-            pointer-events: none;
-        }
-
-        .loading-spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #6366f1;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
-            margin-right: 8px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Registro de Calibración de Válvulas — TECPE S.A.</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1a7abf">
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192x192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512x512.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #e8f4fb;
+  --bg-tertiary: #d0eaf7;
+  --bg-info: #b5d4f4;
+  --bg-success: #eaf3de;
+  --bg-danger: #fcebeb;
+  --bg-warning: #faeeda;
+  --text-primary: #0d2a3e;
+  --text-secondary: #3a6a8a;
+  --text-tertiary: #6a9ab8;
+  --text-info: #0c447c;
+  --text-success: #27500a;
+  --text-danger: #791f1f;
+  --border-tertiary: rgba(13,74,124,0.15);
+  --border-secondary: rgba(13,74,124,0.28);
+  --border-primary: rgba(13,74,124,0.45);
+  --border-info: rgba(12,68,124,0.4);
+  --border-success: rgba(39,80,10,0.3);
+  --border-danger: rgba(121,31,31,0.3);
+  --accent: #1a7abf;
+  --accent-hover: #155f96;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font); background: var(--bg-tertiary); color: var(--text-primary); min-height: 100vh; }
+.container { max-width: 780px; margin: 0 auto; padding: 2rem 1.5rem 4rem; background: #ffffff; border-left: 1px solid var(--border-tertiary); border-right: 1px solid var(--border-tertiary); }
+input, select, textarea, button {
+  font-family: var(--font);
+  font-size: 14px;
+  color: var(--text-primary);
+  background: var(--bg-primary);
+  border: 0.5px solid var(--border-secondary);
+  border-radius: var(--radius-md);
+  padding: 8px 10px;
+  width: 100%;
+  outline: none;
+  transition: border-color .15s;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(26,122,191,0.15); }
+select { cursor: pointer; }
+textarea { resize: vertical; min-height: 60px; }
+button { width: auto; cursor: pointer; }
+
+.nav { display: flex; gap: 4px; margin-bottom: 1.5rem; background: var(--bg-secondary); border-radius: var(--radius-lg); padding: 4px; border: 1px solid var(--border-tertiary); }
+.nav-btn { flex: 1; padding: 9px 12px; border: none; background: transparent; border-radius: var(--radius-md); font-size: 13px; font-weight: 500; cursor: pointer; color: var(--text-secondary); transition: all .15s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.nav-btn.active { background: var(--accent); color: #ffffff; border: none; }
+.nav-count { background: var(--bg-danger); color: var(--text-danger); border-radius: 20px; font-size: 10px; padding: 1px 6px; display: none; }
+.nav-count.show { display: inline; }
+.page { display: none; }
+.page.active { display: block; }
+
+.hdr { display: flex; align-items: center; justify-content: space-between; padding-bottom: 1rem; border-bottom: 2px solid var(--bg-info); margin-bottom: 1.5rem; }
+.hdr-title { font-size: 16px; font-weight: 500; color: var(--accent); }
+.hdr-sub { font-size: 12px; color: var(--text-secondary); margin-top: 3px; }
+.doc-badge { font-size: 11px; font-weight: 500; background: var(--accent); color: #ffffff; padding: 4px 10px; border-radius: var(--radius-md); }
+.lbl { font-size: 11px; font-weight: 500; color: var(--accent); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 8px; border-left: 3px solid var(--accent); padding-left: 8px; }
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1.25rem; }
+.g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 1.25rem; }
+.f { display: flex; flex-direction: column; gap: 5px; }
+.f label { font-size: 12px; color: var(--text-secondary); font-weight: 500; }
+.hr { height: 0.5px; background: var(--border-tertiary); margin: 1.25rem 0; }
+
+.pbox { background: var(--bg-secondary); border-radius: var(--radius-md); padding: .875rem; margin-bottom: 1.25rem; border: 1px solid var(--border-tertiary); }
+.pbox .hint { font-size: 12px; color: var(--text-secondary); margin-bottom: 9px; }
+.ptbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.ptbl th { font-size: 11px; font-weight: 500; color: var(--accent); text-align: center; padding: 0 6px 8px; }
+.ptbl td { text-align: center; padding: 5px 6px; color: var(--text-primary); border-top: 0.5px solid var(--border-tertiary); cursor: pointer; transition: background .12s; }
+.ptbl tr:hover td { background: var(--bg-info); color: var(--text-info); }
+.ptbl tr.sel td { background: var(--accent); color: #ffffff; font-weight: 500; }
+.fbtns { display: flex; gap: 8px; margin-top: 8px; }
+.fbtn { flex: 1; padding: 7px 0; background: #ffffff; border: 1px solid var(--border-secondary); color: var(--text-secondary); font-size: 13px; }
+.fbtn.act { background: var(--accent); color: #ffffff; border-color: var(--accent); font-weight: 500; }
+
+.cdisp { background: var(--bg-secondary); border: 1px solid var(--border-info); border-radius: var(--radius-md); padding: 11px 14px; margin-bottom: 1.25rem; display: none; gap: 16px; align-items: center; flex-wrap: wrap; }
+.cdisp.show { display: flex; }
+.cv { display: flex; flex-direction: column; gap: 1px; }
+.cv .cv-lbl { font-size: 11px; color: var(--text-secondary); }
+.cv .cv-val { font-size: 16px; font-weight: 500; }
+.cv-accent { color: var(--accent) !important; }
+.cv-sep { color: var(--text-secondary); font-size: 16px; }
+
+.dtbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.dtbl th { font-size: 11px; font-weight: 500; color: var(--text-secondary); text-align: left; padding: 0 8px 8px; }
+.dtbl td { padding: 5px 8px; color: var(--text-primary); border-top: 0.5px solid var(--border-tertiary); }
+
+.rrow { display: flex; gap: 12px; margin-bottom: 1.25rem; }
+.rbtn { flex: 1; padding: 13px 0; border-radius: var(--radius-md); border: 1.5px solid var(--border-tertiary); background: var(--bg-primary); font-size: 14px; font-weight: 500; cursor: pointer; color: var(--text-secondary); transition: all .15s; }
+.rbtn.ap.act { background: var(--bg-success); color: var(--text-success); border-color: var(--border-success); }
+.rbtn.re.act { background: var(--bg-danger); color: var(--text-danger); border-color: var(--border-danger); }
+
+.arow { display: flex; gap: 10px; margin-top: 1.5rem; }
+.btn-sec { padding: 11px 16px; background: #ffffff; border: 1px solid var(--border-secondary); border-radius: var(--radius-md); font-size: 13px; font-weight: 500; cursor: pointer; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
+.btn-sec:hover { border-color: var(--accent); color: var(--accent); }
+.btn-pri { flex: 1; padding: 11px; background: var(--accent); border: none; border-radius: var(--radius-md); font-size: 13px; font-weight: 500; cursor: pointer; color: #ffffff; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.btn-pri:hover { background: var(--accent-hover); }
+
+.kpi-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 1.5rem; }
+.kpi { background: var(--bg-secondary); border-radius: var(--radius-md); padding: .875rem 1rem; border: 1px solid var(--border-tertiary); }
+.kpi p { font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
+.kpi strong { font-size: 22px; font-weight: 500; color: var(--accent); }
+.kpi.ok strong { color: var(--text-success); }
+.kpi.fail strong { color: var(--text-danger); }
+
+.filter-row { display: flex; gap: 10px; margin-bottom: 1rem; flex-wrap: wrap; }
+.filter-row input { flex: 1; min-width: 120px; padding: 7px 10px; }
+.filter-row select { width: 140px; padding: 7px 10px; }
+
+.hist-tbl { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
+.hist-tbl th { font-size: 11px; font-weight: 500; color: var(--accent); text-align: left; padding: 8px 10px; border-bottom: 2px solid var(--bg-info); cursor: pointer; user-select: none; }
+.hist-tbl th:hover { color: var(--accent-hover); }
+.hist-tbl td { padding: 10px; border-bottom: 0.5px solid var(--border-tertiary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }
+.hist-tbl tr:hover td { background: var(--bg-secondary); }
+
+.bdg { font-size: 11px; font-weight: 500; padding: 3px 8px; border-radius: 20px; white-space: nowrap; }
+.bok { background: var(--bg-success); color: var(--text-success); }
+.bfl { background: var(--bg-danger); color: var(--text-danger); }
+
+.act-btns { display: flex; gap: 5px; }
+.ico-btn { padding: 5px 8px; font-size: 12px; background: var(--bg-secondary); border: 1px solid var(--border-tertiary); border-radius: var(--radius-md); cursor: pointer; color: var(--text-secondary); display: flex; align-items: center; gap: 4px; white-space: nowrap; transition: all .12s; }
+.ico-btn:hover { background: var(--bg-info); color: var(--text-info); border-color: var(--border-info); }
+.ico-btn.danger:hover { background: var(--bg-danger); color: var(--text-danger); border-color: var(--border-danger); }
+
+.empty-hist { text-align: center; padding: 3rem; color: var(--text-secondary); font-size: 14px; }
+
+.cert-wrap { background: rgba(0,0,0,0.4); border-radius: var(--radius-lg); padding: 1.5rem; margin-top: 1.5rem; display: none; }
+.cert-wrap.show { display: block; }
+.cert-paper { background: #fff; border-radius: 8px; padding: 2rem; max-width: 640px; margin: 0 auto; color: #1a1a1a; font-family: Arial, sans-serif; font-size: 13px; }
+.cert-paper.pass-cert { border-top: 4px solid #1D9E75; }
+.cert-paper.fail-cert { border-top: 4px solid #E24B4A; }
+.cert-hdr { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem; padding-bottom: 1rem; border-bottom: 1px solid #e5e5e5; }
+.cert-logo { font-size: 17px; font-weight: 700; color: #111; }
+.cert-logo span { display: block; font-size: 10px; color: #888; font-weight: 400; text-transform: uppercase; letter-spacing: .06em; margin-top: 2px; }
+.cert-idblock { text-align: right; }
+.cert-idblock small { font-size: 10px; color: #888; text-transform: uppercase; display: block; letter-spacing: .05em; }
+.cert-idblock strong { font-size: 21px; font-weight: 700; color: #111; }
+.cert-title-bar { text-align: center; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; padding: 9px 0; border-bottom: 1px solid #e5e5e5; margin-bottom: 1.25rem; color: #333; }
+.cert-band { text-align: center; padding: 13px; border-radius: 6px; margin-bottom: 1.25rem; font-size: 18px; font-weight: 700; letter-spacing: .05em; }
+.cert-band.pass { background: #EAF3DE; color: #27500A; }
+.cert-band.fail { background: #FCEBEB; color: #791F1F; }
+.cert-grid { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid #e5e5e5; border-radius: 6px; overflow: hidden; margin-bottom: 1.25rem; }
+.cc { padding: 8px 11px; border-bottom: 1px solid #e5e5e5; border-right: 1px solid #e5e5e5; }
+.cc:nth-child(2n) { border-right: none; }
+.cc:nth-last-child(-n+2) { border-bottom: none; }
+.cc small { font-size: 10px; color: #999; text-transform: uppercase; letter-spacing: .05em; display: block; margin-bottom: 2px; }
+.cc strong { font-size: 13px; font-weight: 600; color: #111; }
+.pres-blk { background: #f6f6f6; border-radius: 6px; padding: 11px 14px; margin-bottom: 1.25rem; }
+.pres-blk > small { font-size: 10px; color: #999; text-transform: uppercase; letter-spacing: .05em; display: block; margin-bottom: 8px; }
+.pres-row { display: flex; gap: 12px; }
+.pres-item { flex: 1; text-align: center; }
+.pres-item p { font-size: 10px; color: #999; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 2px; }
+.pres-item strong { font-size: 15px; font-weight: 700; color: #111; display: block; }
+.pres-item span { font-size: 10px; color: #999; }
+.cert-obs-blk { background: #fffbe6; border-left: 3px solid #EF9F27; padding: 9px 11px; margin-bottom: 1.25rem; font-size: 12px; color: #412402; }
+.cert-sigs { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid #e5e5e5; }
+.sig-blk { text-align: center; }
+.sig-line { height: 36px; border-bottom: 1px solid #aaa; margin-bottom: 6px; }
+.sig-blk p { font-size: 12px; color: #444; font-weight: 600; }
+.sig-blk span { font-size: 10px; color: #999; }
+.cert-foot { text-align: center; font-size: 10px; color: #bbb; margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid #eee; }
+.cert-actions { display: flex; gap: 10px; justify-content: center; margin-top: 1rem; }
+.cert-close { padding: 9px 20px; background: #ffffff; border: 1px solid var(--border-secondary); border-radius: var(--radius-md); font-size: 13px; cursor: pointer; color: var(--text-secondary); font-weight: 500; }
+.cert-print { padding: 9px 24px; background: var(--accent); border: none; border-radius: var(--radius-md); font-size: 13px; cursor: pointer; color: #ffffff; font-weight: 500; display: flex; align-items: center; gap: 6px; }
+.cert-print:hover { background: var(--accent-hover); }
+
+.toast { background: var(--accent); color: #ffffff; padding: 8px 18px; border-radius: var(--radius-md); font-size: 12px; opacity: 0; transition: opacity .3s; margin-top: 1rem; text-align: center; pointer-events: none; }
+.toast.show { opacity: 1; }
+
+.certs-card { background: var(--bg-primary); border: 0.5px solid var(--border-tertiary); border-radius: var(--radius-md); padding: 12px 16px; margin-bottom: 8px; display: flex; align-items: center; gap: 14px; }
+.certs-avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 16px; }
+.certs-avatar.ok { background: var(--bg-success); color: var(--text-success); }
+.certs-avatar.fail { background: var(--bg-danger); color: var(--text-danger); }
+.certs-info { flex: 1; min-width: 0; }
+.certs-info p { font-size: 14px; font-weight: 500; }
+.certs-info span { font-size: 12px; color: var(--text-secondary); }
+.certs-btns { display: flex; gap: 8px; flex-shrink: 0; }
+
+.sort-icon { font-size: 10px; margin-left: 2px; opacity: .5; }
+
+@media (max-width: 600px) {
+  .g2, .g3 { grid-template-columns: 1fr; }
+  .kpi-row { grid-template-columns: 1fr 1fr; }
+  .pres-row { flex-wrap: wrap; }
+  .hist-tbl th:nth-child(3), .hist-tbl td:nth-child(3) { font-size: 12px; }
+}
+
+.cert-qr-block { display:flex; align-items:flex-end; justify-content:space-between; margin-top:1.25rem; padding-top:1.25rem; border-top:1px solid #e5e5e5; gap:16px; }
+.cert-qr-info { flex:1; font-size:10px; color:#999; line-height:1.6; }
+.cert-qr-info strong { color:#444; font-size:11px; display:block; margin-bottom:4px; }
+.cert-qr-box { flex-shrink:0; }
+@media print {
+  body { background: #fff; }
+  .cert-paper { box-shadow: none; }
+}
+</style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
-    <div class="container">
-        <!-- Error/Success Banners -->
-        <div id="error-banner" class="error-banner">
-            <i class="fas fa-exclamation-triangle"></i>
-            <span id="error-message">Error al conectar con Google Sheets</span>
-        </div>
-        
-        <div id="success-banner" class="success-banner">
-            <i class="fas fa-check-circle"></i>
-            <span id="success-message">Datos actualizados exitosamente</span>
-        </div>
+<div class="container">
 
-        <!-- Header -->
-        <div class="header">
-            <div class="header-left">
-                <div class="company-icon">
-                    <i class="fas fa-truck"></i>
-                </div>
-                <div class="header-info">
-                    <h1 id="current-client-name">PS</h1>
-                    <div class="header-subtitle">
-                        <span class="status-dot" id="connection-dot"></span>
-                        <span id="data-source-text">Datos reales Google Sheets</span>
-                        <span>Última actualización: <span id="last-update">--:--:--</span></span>
-                    </div>
-                </div>
-            </div>
-            <div class="header-right">
-                <button class="config-btn" onclick="openConfigModal()">
-                    <i class="fas fa-cog"></i>
-                    Configurar
-                </button>
-                <button class="update-btn" onclick="updateDashboard()">
-                    <i class="fas fa-sync-alt" id="update-icon"></i>
-                    Actualizar
-                </button>
-            </div>
-        </div>
+<div style="display:flex;align-items:center;gap:14px;padding:1.25rem 0 1rem;border-bottom:2px solid #b5d4f4;margin-bottom:1.25rem">
+  <img src="data:image/png;base64,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" alt="TECPE S.A." style="height:56px;width:auto;object-fit:contain"/>
+  <div>
+    <div style="font-size:18px;font-weight:700;color:#1a7abf;letter-spacing:.01em">TECPE S.A.</div>
+    <div style="font-size:11px;color:#3a6a8a;text-transform:uppercase;letter-spacing:.06em;margin-top:2px">Tecnología Petrolera</div>
+    <div style="font-size:11px;color:#3a6a8a;margin-top:1px">Sistema de Registro de Calibración de Válvulas</div>
+  </div>
+</div>
 
-        <!-- Configuration Modal -->
-        <div id="configModal" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2>Configuración Google Sheets</h2>
-                    <span class="close" onclick="closeConfigModal()">&times;</span>
-                </div>
-                <div class="form-group">
-                    <label for="spreadsheetId">ID de la Hoja de Cálculo:</label>
-                    <input type="text" id="spreadsheetId" placeholder="1GKlPIXo60GnhbBA6ztCHEfKDhPZzKypChl2s4qpHTI8">
-                </div>
-                <div class="form-group">
-                    <label for="apiKey">API Key de Google (opcional):</label>
-                    <input type="text" id="apiKey" placeholder="AIzaSy...">
-                </div>
-                <div class="form-group">
-                    <label for="manualData">Actualización Manual (si falla la conexión automática):</label>
-                    <textarea id="manualData" rows="8" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-family: monospace; font-size: 12px;" placeholder='Pega aquí el JSON de tu script si la conexión automática falla:
-{"PAE":{"kmTotales":...}}'></textarea>
-                    <button type="button" onclick="loadManualData()" style="margin-top: 10px; background: #10b981; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">Cargar Datos Manuales</button>
-                </div>
-                <div class="form-group">
-                    <p><strong>Instrucciones:</strong></p>
-                    <ol style="margin-left: 20px; color: #666; font-size: 14px;">
-                        <li>Haz tu hoja de Google Sheets pública para lectura</li>
-                        <li>Si la conexión automática falla, abre: <a href="https://script.google.com/macros/s/AKfycbyt6DIgx9XSrvRvKR1-19kOISyVY2Sd5HUYBBWV9WE4sQiNKqx467wvU68gUOQUGx4/exec" target="_blank" style="color: #6366f1;">tu script</a></li>
-                        <li>Copia todo el JSON que aparece</li>
-                        <li>Pégalo en el campo "Actualización Manual" y haz clic en "Cargar Datos Manuales"</li>
-                    </ol>
-                </div>
-                <button class="btn-primary" onclick="saveConfig()">Guardar Configuración</button>
-            </div>
-        </div>
+<nav class="nav">
+  <button class="nav-btn active" onclick="goPage('form')" id="nb-form">
+    <i class="ti ti-pencil" aria-hidden="true"></i> Nuevo registro
+  </button>
+  <button class="nav-btn" onclick="goPage('hist')" id="nb-hist">
+    <i class="ti ti-history" aria-hidden="true"></i> Historial
+    <span class="nav-count" id="hist-count">0</span>
+  </button>
+  <button class="nav-btn" onclick="goPage('certs')" id="nb-certs">
+    <i class="ti ti-certificate" aria-hidden="true"></i> Certificados
+    <span class="nav-count" id="cert-count">0</span>
+  </button>
+</nav>
 
-        <!-- Navigation -->
-        <div class="nav-tabs">
-            <button class="nav-tab" onclick="switchClient('PAE')">PAE</button>
-            <button class="nav-tab" onclick="switchClient('BAKER')">BAKER</button>
-            <button class="nav-tab" onclick="switchClient('NOVOMET')">NOVOMET</button>
-            <button class="nav-tab active" onclick="switchClient('PS')">PS</button>
-            <button class="nav-tab" onclick="switchClient('CONSOLIDADO')">CONSOLIDADO</button>
-        </div>
-
-        <!-- Main Metrics -->
-        <div class="main-metrics">
-            <div class="score-circle">
-                <div class="circle-progress" style="--progress: 281deg;" id="score-circle">
-                    <div class="circle-inner">
-                        <div class="score-value" id="main-score">78</div>
-                        <div class="score-label">SCORE</div>
-                    </div>
-                </div>
-                <div class="excellence-badge">
-                    <i class="fas fa-star"></i>
-                    <span id="performance-level">Bueno</span>
-                </div>
-            </div>
-
-            <div class="main-metric">
-                <div class="metric-value-large blue" id="km-totales">473.195</div>
-                <div class="metric-label-large">KM Totales</div>
-            </div>
-
-            <div class="main-metric">
-                <div class="metric-value-large green" id="accidentes-main">0</div>
-                <div class="metric-label-large">Accidentes<br>Registrables</div>
-            </div>
-
-            <div class="main-metric">
-                <div class="metric-value-large purple" id="capacitacion-main">181h</div>
-                <div class="metric-label-large">Capacitación<br>Total horas</div>
-            </div>
-        </div>
-
-        <!-- Secondary Metrics -->
-        <div class="secondary-metrics">
-            <div class="metric-card blue-border">
-                <div class="metric-icon blue">
-                    <i class="fas fa-clock"></i>
-                </div>
-                <div class="metric-number blue" id="hht-total">86.049</div>
-                <div class="metric-title">HHT Total</div>
-                <div class="metric-meta">Horas trabajadas <span class="trend-indicator trend-up"><i class="fas fa-arrow-up"></i> Mejorando</span></div>
-            </div>
-
-            <div class="metric-card green-border">
-                <div class="metric-icon green">
-                    <i class="fas fa-users"></i>
-                </div>
-                <div class="metric-number green" id="hab-personal">100%</div>
-                <div class="metric-title">Hab. Personal</div>
-                <div class="metric-meta">Meta: >95%</div>
-            </div>
-
-            <div class="metric-card orange-border">
-                <div class="metric-icon orange">
-                    <i class="fas fa-truck-moving"></i>
-                </div>
-                <div class="metric-number orange" id="hab-vehiculos">100%</div>
-                <div class="metric-title">Hab. Vehículos</div>
-                <div class="metric-meta">Meta: >95%</div>
-            </div>
-
-            <div class="metric-card purple-border">
-                <div class="metric-icon purple">
-                    <i class="fas fa-tachometer-alt"></i>
-                </div>
-                <div class="metric-number purple" id="excesos-total">635</div>
-                <div class="metric-title">Excesos</div>
-                <div class="metric-meta">Tendencia <span class="trend-indicator trend-up"><i class="fas fa-arrow-up"></i> Mejorando</span></div>
-            </div>
-
-            <div class="metric-card orange-border">
-                <div class="metric-icon orange">
-                    <i class="fas fa-exclamation-triangle"></i>
-                </div>
-                <div class="metric-number orange" id="riesgo-no-aceptable">17%</div>
-                <div class="metric-title">Riesgo No Aceptable</div>
-                <div class="metric-meta">Meta: < 20%</div>
-            </div>
-
-            <div class="metric-card red-border">
-                <div class="metric-icon red">
-                    <i class="fas fa-calculator"></i>
-                </div>
-                <div class="metric-number red" id="hhc-value">2.8</div>
-                <div class="metric-title">HHC</div>
-                <div class="metric-meta">Meta: > 3.0</div>
-            </div>
-
-            <div class="metric-card pink-border">
-                <div class="metric-icon pink">
-                    <i class="fas fa-clipboard-check"></i>
-                </div>
-                <div class="metric-number pink" id="nc-internas">0</div>
-                <div class="metric-title">NC Internas</div>
-                <div class="metric-meta">Meta: ≤5</div>
-            </div>
-
-            <div class="metric-card red-border">
-                <div class="metric-icon red">
-                    <i class="fas fa-exclamation-circle"></i>
-                </div>
-                <div class="metric-number red" id="nc-externas">0</div>
-                <div class="metric-title">NC Externas</div>
-                <div class="metric-meta">Meta: ≤3</div>
-            </div>
-        </div>
-
-        <!-- Charts -->
-        <div class="charts-section">
-            <div class="chart-container">
-                <h3 class="chart-title">
-                    <i class="fas fa-chart-line"></i>
-                    Tendencia Operacional
-                </h3>
-                <canvas id="operationalChart" class="chart-canvas"></canvas>
-            </div>
-
-            <div class="chart-container">
-                <h3 class="chart-title">
-                    <i class="fas fa-chart-bar"></i>
-                    Excesos de Velocidad
-                </h3>
-                <canvas id="excessChart" class="chart-canvas"></canvas>
-            </div>
-        </div>
-
-        <!-- Comparative -->
-        <div class="comparative-section">
-            <h2 class="section-title">Comparativo General</h2>
-            <div class="comparative-cards" id="comparative-cards">
-                <!-- Cards will be generated dynamically -->
-            </div>
-        </div>
-
-        <!-- Footer -->
-        <div class="footer">
-            <div class="connection-status" id="connection-status">
-                <i class="fas fa-circle"></i>
-                <span>Dashboard Desconectado</span>
-            </div>
-            <div class="data-sources">
-                <div id="client-data">Configurar conexión con Google Sheets</div>
-            </div>
-            <div class="last-update">
-                <i class="fas fa-sync-alt"></i>
-                Fuente: Google Sheets
-                <br>Última actualización: <span id="footer-update">--:--:--</span>
-            </div>
-        </div>
+<!-- PÁGINA: NUEVO REGISTRO -->
+<div class="page active" id="page-form">
+  <div class="hdr">
+    <div>
+      <div class="hdr-title"><i class="ti ti-adjustments-horizontal" aria-hidden="true" style="vertical-align:-2px;margin-right:6px"></i>Registro de calibración</div>
+      <div class="hdr-sub">TECPE S.A. · Prueba hidrostática / neumática</div>
     </div>
+    <div class="doc-badge" id="doc-num">RC-0001</div>
+  </div>
 
-    <script>
-        // Configuration
-        let config = {
-            spreadsheetId: '1GKlPIXo60GnhbBA6ztCHEfKDhPZzKypChl2s4qpHTI8',
-            apiKey: '',
-            scriptUrl: 'https://script.google.com/macros/s/AKfycbyt6DIgx9XSrvRvKR1-19kOISyVY2Sd5HUYBBWV9WE4sQiNKqx467wvU68gUOQUGx4/exec',
-            isConnected: false
-        };
+  <div class="lbl">Identificación</div>
+  <div class="g2">
+    <div class="f"><label>Tag / Nº válvula</label><input type="text" id="tag" placeholder="Ej: VCT-001"/></div>
+    <div class="f"><label>Cliente</label><input type="text" id="cliente" placeholder="Ej: PAE / TECPE S.A."/></div>
+  </div>
+  <div class="g2">
+    <div class="f"><label>Ubicación</label><input type="text" id="ubic" placeholder="Ej: Yacimiento Norte"/></div>
+  </div>
+  <div class="g3">
+    <div class="f"><label>Marca / fabricante</label><input type="text" id="marca" placeholder="Ej: Fisher"/></div>
+    <div class="f"><label>Serie</label><input type="text" id="serie" placeholder="Ej: 150-A / WCB-Gate"/></div>
+    <div class="f"><label>Tipo de válvula</label>
+      <select id="tipo"><option value="">—</option><option>Exclusa</option><option>Esférica</option><option>Retención</option><option>Globo</option><option>Mariposa</option><option>Aguja</option><option>Compuerta</option><option>Otra</option></select>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="f"><label>Diámetro (pulgadas)</label>
+      <select id="dn"><option value="">—</option><option>1"</option><option>1 1/2"</option><option>2"</option><option>2 1/2"</option><option>2 7/8"</option><option>3"</option><option>4"</option><option>5"</option><option>6"</option><option>7"</option><option>8"</option><option>9"</option><option>10"</option><option>11"</option><option>12"</option><option>13"</option><option>14"</option><option>15"</option><option>16"</option><option>17"</option><option>18"</option><option>19"</option><option>20"</option></select>
+    </div>
+    <div class="f"><label>Rating (clase de presión)</label>
+      <select id="rating"><option value="">—</option><option value="150">S-150 (150 PSI)</option><option value="200">S-200 (200 PSI)</option><option value="300">S-300 (300 PSI)</option><option value="600">S-600 (600 PSI)</option><option value="800">S-800 (800 PSI)</option><option value="900">S-900 (900 PSI)</option><option value="1500">S-1500 (1500 PSI)</option><option value="2000">S-2000 (2000 PSI)</option><option value="3000">S-3000 (3000 PSI)</option></select>
+    </div>
+  </div>
 
-        // Sheet mappings
-        const sheetMappings = {
-            PAE: { gid: '0', name: 'PAE' },
-            BAKER: { gid: '1683104293', name: 'BAKER' },
-            NOVOMET: { gid: '1385355120', name: 'NOVOMET' },
-            PS: { gid: '759790839', name: 'PS' },
-            CONSOLIDADO: { gid: '285444230', name: 'CONSOLIDADO' }
-        };
+  <div class="hr"></div>
+  <div class="lbl">Manómetro utilizado para calibrar</div>
+  <div class="g2">
+    <div class="f"><label>Seleccionar manómetro registrado</label>
+      <select id="mano-select"><option value="">— Seleccionar de la lista —</option></select>
+    </div>
+    <div class="f" id="mano-alert-wrap" style="display:none;justify-content:flex-end;align-items:flex-end">
+      <span id="mano-alert" style="font-size:12px;font-weight:700;padding:8px 12px;border-radius:6px;display:inline-block"></span>
+    </div>
+  </div>
+  <div class="g3">
+    <div class="f"><label>Marca / modelo</label><input type="text" id="mano-marca" placeholder="Ej: Baumer MAN-R40"/></div>
+    <div class="f"><label>Número de serie</label><input type="text" id="mano-serie" placeholder="Ej: 021-A"/></div>
+    <div class="f"><label>Rango de escala (PSI)</label><input type="text" id="mano-rango" placeholder="Ej: 0 – 3000 PSI"/></div>
+  </div>
+  <div class="g3">
+    <div class="f"><label>Fecha última calibración</label><input type="date" id="mano-fcal"/></div>
+    <div class="f"><label>Fecha vencimiento calibración</label><input type="date" id="mano-fvenc"/></div>
+    <div class="f"><label>Certificado / trazabilidad</label><input type="text" id="mano-cert" placeholder="Ej: INTI N° 2024-0341"/></div>
+  </div>
 
-        // Data structure with REAL data from your Google Sheets
-        const clientsData = {
-            PAE: {
-                kmTotales: '1.081.036',
-                accidentes: 0,
-                capacitacion: '1457h',
-                hhtTotal: '135.072',
-                habPersonal: 96,
-                habVehiculos: 96,
-                excesos: 1284,
-                hhc: 3.3,
-                riesgoNoAceptable: 18,
-                ncInternas: 7,
-                ncExternas: 2,
-                kmData: [145100, 132106, 131713, 124897, 140831, 144485, 130132, 131772],
-                hhtData: [18914, 18911, 18934, 16761, 15626, 15369, 15397, 15160],
-                excesosData: [681, 1158, 2370, 1683, 1029, 1130, 1747, 475],
-                color: '#6366f1'
-            },
-            BAKER: {
-                kmTotales: '282.374',
-                accidentes: 0,
-                capacitacion: '4.8h',
-                hhtTotal: '12.168',
-                habPersonal: 100,
-                habVehiculos: 100,
-                excesos: 401.5,
-                hhc: 3.2,
-                riesgoNoAceptable: 33,
-                ncInternas: 0,
-                ncExternas: 0,
-                kmData: [33532, 29763, 33146, 39409, 37459, 38300, 35789, 34976],
-                hhtData: [1440, 1224, 1584, 1584, 1584, 1584, 1584, 1584],
-                excesosData: [172, 404, 488, 411, 218, 205, 704, 610],
-                color: '#3b82f6'
-            },
-            NOVOMET: {
-                kmTotales: '190.251',
-                accidentes: 0,
-                capacitacion: '3.9h',
-                hhtTotal: '8.032',
-                habPersonal: 100,
-                habVehiculos: 100,
-                excesos: 180.375,
-                hhc: 3.9,
-                riesgoNoAceptable: 33,
-                ncInternas: 0,
-                ncExternas: 1,
-                kmData: [22274, 21689, 26888, 25883, 23759, 22437, 27722, 19599],
-                hhtData: [880, 816, 1056, 1056, 1056, 1056, 1056, 1056],
-                excesosData: [355, 130, 303, 193, 110, 130, 115, 107],
-                color: '#10b981'
-            },
-            PS: {
-                kmTotales: '473.195',
-                accidentes: 0,
-                capacitacion: '181h',
-                hhtTotal: '86.049',
-                habPersonal: 100,
-                habVehiculos: 100,
-                excesos: 635,
-                hhc: 2.8,
-                riesgoNoAceptable: 17,
-                ncInternas: 0,
-                ncExternas: 0,
-                kmData: [62331, 21689, 58055, 60138, 71898, 60160, 66394, 72530],
-                hhtData: [13329, 13379, 12794, 9728, 9214, 9242, 9243, 9120],
-                excesosData: [82, 423, 441, 555, 418, 555, 2297, 309],
-                color: '#f59e0b'
-            }
-        };
+  <div class="hr"></div>
+  <div class="lbl">Presión de prueba</div>
+  <div class="pbox">
+    <div class="hint">Seleccionar fila para autocompletar el rating</div>
+    <table class="ptbl" id="ptbl">
+      <thead><tr><th>Serie</th><th>PSI</th><th>BAR base</th><th>KG/CM² base</th></tr></thead>
+      <tbody>
+        <tr data-psi="150"  data-bar="10.3"  data-kg="10.56" data-baras="11.4"  data-barcu="15.5"  data-kgas="11.6"  data-kgcu="17.4"><td>S-150</td><td>150</td><td>10,3</td><td>10,56</td></tr>
+        <tr data-psi="200"  data-bar="13.8"  data-kg="10.56" data-baras="15.2"  data-barcu="20.7"  data-kgas="11.6"  data-kgcu="17.4"><td>S-200</td><td>200</td><td>13,8</td><td>10,56</td></tr>
+        <tr data-psi="300"  data-bar="20.7"  data-kg="21.13" data-baras="22.8"  data-barcu="31.0"  data-kgas="23.2"  data-kgcu="34.9"><td>S-300</td><td>300</td><td>20,7</td><td>21,13</td></tr>
+        <tr data-psi="600"  data-bar="41.4"  data-kg="42.25" data-baras="45.5"  data-barcu="62.1"  data-kgas="46.5"  data-kgcu="69.7"><td>S-600</td><td>600</td><td>41,4</td><td>42,25</td></tr>
+        <tr data-psi="800"  data-bar="55.2"  data-kg="56.34" data-baras="60.7"  data-barcu="82.7"  data-kgas="62.0"  data-kgcu="93.0"><td>S-800</td><td>800</td><td>55,2</td><td>56,34</td></tr>
+        <tr data-psi="900"  data-bar="62.1"  data-kg="63.38" data-baras="68.3"  data-barcu="93.1"  data-kgas="69.7"  data-kgcu="104.6"><td>S-900</td><td>900</td><td>62,1</td><td>63,38</td></tr>
+        <tr data-psi="1500" data-bar="103.4" data-kg="105.63" data-baras="113.8" data-barcu="155.1" data-kgas="116.2" data-kgcu="174.3"><td>S-1500</td><td>1500</td><td>103,4</td><td>105,63</td></tr>
+        <tr data-psi="2000" data-bar="137.9" data-kg="140.85" data-baras="151.7" data-barcu="206.8" data-kgas="154.9" data-kgcu="232.4"><td>S-2000</td><td>2000</td><td>137,9</td><td>140,85</td></tr>
+        <tr data-psi="3000" data-bar="206.8" data-kg="211.27" data-baras="227.5" data-barcu="310.3" data-kgas="232.4" data-kgcu="348.6"><td>S-3000</td><td>3000</td><td>206,8</td><td>211,27</td></tr>
+      </tbody>
+    </table>
+  </div>
 
-        // Calculate initial scores for all clients
-        for (const clientName in clientsData) {
-            clientsData[clientName].score = calculateScore(clientsData[clientName]);
-            clientsData[clientName].performance = getPerformanceLevel(clientsData[clientName].score);
-        }
+  <div class="cdisp" id="cdisp" style="flex-direction:column;gap:10px;">
+    <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;width:100%">
+      <div class="cv"><span class="cv-lbl">Base (PSI)</span><span class="cv-val" id="cv-b">—</span></div>
+      <span class="cv-sep" style="font-size:13px;color:var(--text-secondary);font-weight:600">PRUEBA CUERPO × 1,5</span>
+      <div class="cv"><span class="cv-lbl">Presión requerida</span><span class="cv-val cv-accent" id="cv-r11">—</span></div>
+      <div class="cv" style="margin-left:auto"><span class="cv-lbl">BAR</span><span class="cv-val" id="cv-bar11">—</span></div>
+      <div class="cv"><span class="cv-lbl">KG/CM²</span><span class="cv-val" id="cv-kg11">—</span></div>
+    </div>
+    <div style="height:0.5px;background:var(--border-tertiary);width:100%"></div>
+    <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;width:100%">
+      <div class="cv"><span class="cv-lbl">Base (PSI)</span><span class="cv-val" id="cv-b2">—</span></div>
+      <span class="cv-sep" style="font-size:13px;color:var(--text-secondary);font-weight:600">PRUEBA ASIENTO × 1,1</span>
+      <div class="cv"><span class="cv-lbl">Presión requerida</span><span class="cv-val cv-accent" id="cv-r15">—</span></div>
+      <div class="cv" style="margin-left:auto"><span class="cv-lbl">BAR</span><span class="cv-val" id="cv-bar15">—</span></div>
+      <div class="cv"><span class="cv-lbl">KG/CM²</span><span class="cv-val" id="cv-kg15">—</span></div>
+    </div>
+  </div>
 
-        let currentClient = 'PS';
-        let charts = {};
-        const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago'];
+  <div class="g2">
+    <div class="f"><label>Lectura manómetro — Cuerpo (PSI) <span style="font-size:11px;color:var(--text-tertiary)">× 1,5</span></label><input type="number" id="preal-cuerpo" placeholder="Presión registrada cuerpo" step="0.1"/></div>
+    <div class="f"><label>Lectura manómetro — Asiento (PSI) <span style="font-size:11px;color:var(--text-tertiary)">× 1,1</span></label><input type="number" id="preal-asiento" placeholder="Presión registrada asiento" step="0.1"/></div>
+  </div>
+  <div class="g2">
+    <div class="f"><label>Instrumento de medición</label><input type="text" id="instr" placeholder="Ej: Manómetro Baumer #021"/></div>
+  </div>
 
-        // FUNCIÓN ACTUALIZADA CON LOS CAMBIOS SOLICITADOS
-        function calculateScore(data) {
-            // Simple scoring algorithm based on key metrics
-            let score = 70; // Base score
-            
-            // Bonus for low accidents
-            if (data.accidentes <= 0) score += 10;
-            else if (data.accidentes <= 2) score += 5;
-            
-            // Bonus for high HHC
-            const hhc = parseFloat(data.hhc) || 0;
-            if (hhc >= 3.5) score += 10;
-            else if (hhc >= 3.0) score += 5;
-            
-            // Bonus for high personal/vehicle qualifications
-            if (data.habPersonal >= 95 && data.habVehiculos >= 95) score += 10;
-            else if (data.habPersonal >= 90 && data.habVehiculos >= 90) score += 5;
-            
-            // MAYOR PENALIZACIÓN - Penalty for high risk (MÁS PUNITIVO)
-            if (data.riesgoNoAceptable >= 30) score -= 20;  // Cambiado de -10 a -20
-            else if (data.riesgoNoAceptable >= 20) score -= 10; // Cambiado de -5 a -10
-            
-            // NUEVO - Bonus for improving excess speed trend
-            // Analizar tendencia de excesos de velocidad (últimos 3 meses vs primeros 3 meses)
-            if (data.excesosData && data.excesosData.length >= 6) {
-                const firstThreeMonths = data.excesosData.slice(0, 3).reduce((a, b) => a + b, 0) / 3;
-                const lastThreeMonths = data.excesosData.slice(-3).reduce((a, b) => a + b, 0) / 3;
-                
-                // Si los últimos 3 meses tienen 20% menos excesos que los primeros 3 meses = tendencia mejorando
-                if (lastThreeMonths < firstThreeMonths * 0.8) {
-                    score += 5; // Bonus por tendencia a la mejora en excesos
-                }
-            }
-            
-            return Math.min(100, Math.max(0, score));
-        }
+  <div class="pbox">
+    <div class="hint">Duración mínima por norma</div>
+    <table class="dtbl">
+      <thead><tr><th>Diámetro</th><th>Duración mínima</th></tr></thead>
+      <tbody>
+        <tr><td>1"</td><td>15 s</td></tr>
+        <tr><td>1 1/2"</td><td>15 s</td></tr>
+        <tr><td>2"</td><td>15 s</td></tr>
+        <tr><td>2 1/2"</td><td>15 s</td></tr>
+        <tr><td>3" a 6"</td><td>60 s</td></tr>
+        <tr><td>7" a 12"</td><td>120 s</td></tr>
+        <tr><td>13" a 20"</td><td>300 s</td></tr>
+      </tbody>
+    </table>
+  </div>
 
-        function getPerformanceLevel(score) {
-            if (score >= 90) return 'Excelente';
-            if (score >= 80) return 'Muy Bueno';
-            if (score >= 70) return 'Bueno';
-            if (score >= 60) return 'Regular';
-            return 'Necesita Mejora';
-        }
+  <div class="g2">
+    <div class="f"><label>Duración real (s)</label><input type="number" id="dur" placeholder="Segundos"/></div>
+    <div class="f"><label>Temperatura ambiente (°C)</label><input type="number" id="temp" placeholder="Opcional"/></div>
+  </div>
 
-        // Fetch data from Google Apps Script using JSONP to avoid CORS
-        async function fetchSheetDataFromScript() {
-            if (!config.scriptUrl) {
-                throw new Error('URL del script no configurada');
-            }
+  <div class="hr"></div>
+  <div class="lbl">Resultado</div>
+  <div class="rrow">
+    <button class="rbtn ap" id="btn-ap" onclick="setRes('APROBADO')"><i class="ti ti-circle-check" aria-hidden="true" style="vertical-align:-2px;margin-right:5px"></i>Aprobado</button>
+    <button class="rbtn re" id="btn-re" onclick="setRes('RECHAZADO')"><i class="ti ti-circle-x" aria-hidden="true" style="vertical-align:-2px;margin-right:5px"></i>Rechazado</button>
+  </div>
+  <div class="f" style="margin-bottom:1.25rem">
+    <label>Observaciones</label>
+    <textarea id="obs" placeholder="Fugas, condiciones, acciones correctivas..."></textarea>
+  </div>
 
-            return new Promise((resolve, reject) => {
-                // Create a unique callback name
-                const callbackName = 'jsonpCallback_' + Date.now();
-                
-                // Create the script element
-                const script = document.createElement('script');
-                script.src = config.scriptUrl + '?callback=' + callbackName;
-                
-                // Create the callback function
-                window[callbackName] = function(data) {
-                    // Clean up
-                    document.head.removeChild(script);
-                    delete window[callbackName];
-                    resolve(data);
-                };
-                
-                // Handle errors
-                script.onerror = function() {
-                    document.head.removeChild(script);
-                    delete window[callbackName];
-                    reject(new Error('Error al cargar el script'));
-                };
-                
-                // Add to DOM to trigger the request
-                document.head.appendChild(script);
-                
-                // Timeout after 10 seconds
-                setTimeout(() => {
-                    if (window[callbackName]) {
-                        document.head.removeChild(script);
-                        delete window[callbackName];
-                        reject(new Error('Timeout - el script no respondió'));
-                    }
-                }, 10000);
-            });
-        }
+  <div class="hr"></div>
+  <div class="lbl">Operador</div>
+  <div class="g3">
+    <div class="f"><label>Fecha de prueba</label><input type="date" id="fecha"/></div>
+    <div class="f"><label>Operador / técnico</label><input type="text" id="oper" placeholder="Nombre completo"/></div>
+    <div class="f"><label>Inspector / supervisor</label><input type="text" id="insp" placeholder="Nombre completo"/></div>
+  </div>
 
-        // Update data from Google Sheets via Apps Script
-        async function updateFromSheets() {
-            if (!config.scriptUrl) {
-                showError('Configura primero la conexión con Google Sheets');
-                return;
-            }
+  <div class="arow">
+    <button class="btn-sec" onclick="clearForm()"><i class="ti ti-refresh" aria-hidden="true"></i> Limpiar</button>
+    <button class="btn-pri" onclick="saveRecord()"><i class="ti ti-device-floppy" aria-hidden="true"></i> Guardar y emitir certificado</button>
+  </div>
 
-            try {
-                showInfo('Actualizando datos desde Google Sheets...');
-                
-                // Fetch all data from Google Apps Script
-                const sheetsData = await fetchSheetDataFromScript();
-                
-                // Process the data using shared function
-                processSheetData(sheetsData);
-                
-                setConnectionStatus(true);
-                showSuccess('Todos los datos actualizados desde Google Sheets');
-                
-            } catch (error) {
-                console.error('Error updating from sheets:', error);
-                setConnectionStatus(false);
-                showError('Error al actualizar: ' + error.message + '. Usa la actualización manual como respaldo.');
-            }
-        }
+  <div id="cert-form-wrap" class="cert-wrap">
+    <div id="cert-form-paper" class="cert-paper"></div>
+    <div class="cert-actions">
+      <button class="cert-close" onclick="document.getElementById('cert-form-wrap').classList.remove('show')"><i class="ti ti-x" aria-hidden="true" style="margin-right:4px"></i>Cerrar</button>
+      <button class="cert-print" onclick="printCert('cert-form-paper')"><i class="ti ti-printer" aria-hidden="true"></i> Imprimir / PDF</button>
+    </div>
+  </div>
+  <div class="toast" id="toast-form"></div>
+</div>
 
-        // Save configuration
-        function saveConfig() {
-            const spreadsheetId = document.getElementById('spreadsheetId').value.trim();
-            const apiKey = document.getElementById('apiKey').value.trim();
-            
-            if (!spreadsheetId) {
-                showError('Por favor ingresa el ID de la hoja de cálculo');
-                return;
-            }
-            
-            config.spreadsheetId = spreadsheetId;
-            config.apiKey = apiKey;
-            
-            closeConfigModal();
-            showSuccess('Configuración guardada exitosamente');
-            
-            // Test connection
-            testConnection();
-        }
+<!-- PÁGINA: HISTORIAL -->
+<div class="page" id="page-hist">
+  <div class="hdr">
+    <div>
+      <div class="hdr-title"><i class="ti ti-history" aria-hidden="true" style="vertical-align:-2px;margin-right:6px"></i>Historial de calibraciones</div>
+      <div class="hdr-sub">Todos los registros de la sesión</div>
+    </div>
+    <button class="btn-sec" onclick="exportExcelHistorial()" id="btn-csv" style="display:none"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i> Exportar Excel</button>
+  </div>
 
-        // Helper functions
-        function formatNumber(value) {
-            if (typeof value === 'number') {
-                return value.toLocaleString('es-ES');
-            }
-            return value ? value.toString() : '0';
-        }
+  <div class="kpi-row">
+    <div class="kpi"><p>Total registros</p><strong id="kpi-total">0</strong></div>
+    <div class="kpi ok"><p>Aprobados</p><strong id="kpi-ok">0</strong></div>
+    <div class="kpi fail"><p>Rechazados</p><strong id="kpi-fail">0</strong></div>
+    <div class="kpi"><p>Tasa de aprobación</p><strong id="kpi-rate">—</strong></div>
+  </div>
 
-        function getClientColor(clientName) {
-            const colors = {
-                PAE: '#6366f1',
-                BAKER: '#3b82f6',
-                NOVOMET: '#10b981',
-                PS: '#f59e0b',
-                CONSOLIDADO: '#8b5cf6'
-            };
-            return colors[clientName] || '#6366f1';
-        }
+  <div class="filter-row">
+    <input type="text" id="f-search" placeholder="Buscar por tag, ubicación, operador..." oninput="renderHist()"/>
+    <select id="f-result" onchange="renderHist()">
+      <option value="">Todos los resultados</option>
+      <option value="APROBADO">Aprobados</option>
+      <option value="RECHAZADO">Rechazados</option>
+    </select>
+    <select id="f-rating" onchange="renderHist()" style="width:130px">
+      <option value="">Todos los ratings</option>
+      <option>150</option><option>300</option><option>600</option><option>900</option><option>1500</option><option>2000</option>
+    </select>
+  </div>
 
-        // Recalculate CONSOLIDADO
-        function recalculateConsolidado() {
-            console.log('Recalculando CONSOLIDADO...');
-            
-            if (!clientsData.CONSOLIDADO) {
-                clientsData.CONSOLIDADO = { color: '#8b5cf6' };
-            }
-            
-            // Calculate totals from all clients
-            let totalKm = 0;
-            let totalCapacitacion = 0;
-            let totalAccidentes = 0;
-            let totalHht = 0;
-            let totalExcesos = 0;
-            let totalNcInternas = 0;
-            let totalNcExternas = 0;
-            
-            for (const clientName of ['PAE', 'BAKER', 'NOVOMET', 'PS']) {
-                const client = clientsData[clientName];
-                if (client) {
-                    // Sum KM
-                    if (client.kmTotales) {
-                        const km = parseFloat(client.kmTotales.toString().replace(/[.,]/g, '')) || 0;
-                        totalKm += km;
-                    }
-                    
-                    // Sum Capacitación
-                    if (client.capacitacion) {
-                        const capacitacion = parseFloat(client.capacitacion.toString().replace(/[h,]/g, '')) || 0;
-                        totalCapacitacion += capacitacion;
-                    }
-                    
-                    // Sum others
-                    totalAccidentes += client.accidentes || 0;
-                    
-                    if (client.hhtTotal) {
-                        const hht = parseFloat(client.hhtTotal.toString().replace(/[.,]/g, '')) || 0;
-                        totalHht += hht;
-                    }
-                    
-                    if (client.excesos) {
-                        const excesos = Number(client.excesos) || 0;
-                        totalExcesos += excesos;
-                    }
-                    
-                    totalNcInternas += client.ncInternas || 0;
-                    totalNcExternas += client.ncExternas || 0;
-                }
-            }
-            
-            // Update CONSOLIDADO with calculated values
-            clientsData.CONSOLIDADO.kmTotales = totalKm > 0 ? totalKm.toLocaleString('es-ES') : '1.927.856';
-            clientsData.CONSOLIDADO.capacitacion = totalCapacitacion > 0 ? totalCapacitacion.toFixed(1) + 'h' : '1.642h';
-            clientsData.CONSOLIDADO.accidentes = totalAccidentes;
-            clientsData.CONSOLIDADO.hhtTotal = totalHht > 0 ? totalHht.toLocaleString('es-ES') : '241.321';
-            clientsData.CONSOLIDADO.excesos = totalExcesos > 0 ? Math.round(totalExcesos) : 2501;
-            clientsData.CONSOLIDADO.ncInternas = totalNcInternas;
-            clientsData.CONSOLIDADO.ncExternas = totalNcExternas;
-            
-            // Calculate weighted averages for percentages (except riesgoNoAceptable)
-            let totalPersonal = 0, totalVehiculos = 0, count = 0;
-            for (const clientName of ['PAE', 'BAKER', 'NOVOMET', 'PS']) {
-                const client = clientsData[clientName];
-                if (client) {
-                    if (client.habPersonal !== undefined) {
-                        totalPersonal += client.habPersonal;
-                        count++;
-                    }
-                    if (client.habVehiculos !== undefined) {
-                        totalVehiculos += client.habVehiculos;
-                    }
-                }
-            }
-            
-            clientsData.CONSOLIDADO.habPersonal = count > 0 ? Math.round(totalPersonal / count) : 99;
-            clientsData.CONSOLIDADO.habVehiculos = count > 0 ? Math.round(totalVehiculos / count) : 99;
-            
-            // IMPORTANTE: Riesgo No Aceptable para CONSOLIDADO
-            // Si ya viene de Google Sheets (celda N18), mantener ese valor
-            // Si no, usar un valor por defecto (NO calcular promedio)
-            if (!clientsData.CONSOLIDADO.riesgoNoAceptable) {
-                // Valor por defecto - será sobrescrito cuando se carguen datos de Google Sheets
-                clientsData.CONSOLIDADO.riesgoNoAceptable = 25; // Valor por defecto
-            }
-            // Si ya tiene un valor (cargado desde Google Sheets), se mantiene
-            
-            // Calculate HHC average
-            let totalHhc = 0, hhcCount = 0;
-            for (const clientName of ['PAE', 'BAKER', 'NOVOMET', 'PS']) {
-                const client = clientsData[clientName];
-                if (client && client.hhc) {
-                    totalHhc += parseFloat(client.hhc);
-                    hhcCount++;
-                }
-            }
-            clientsData.CONSOLIDADO.hhc = hhcCount > 0 ? (totalHhc / hhcCount).toFixed(1) : '3.3';
-            
-            // Calculate monthly data for graphs
-            const clients = ['PAE', 'BAKER', 'NOVOMET', 'PS'];
-            clientsData.CONSOLIDADO.kmData = [];
-            clientsData.CONSOLIDADO.hhtData = [];
-            clientsData.CONSOLIDADO.excesosData = [];
+  <div style="overflow-x:auto">
+    <table class="hist-tbl">
+      <thead>
+        <tr>
+          <th style="width:80px" onclick="sortHist('id')">ID <span class="sort-icon" id="si-id">↕</span></th>
+          <th style="width:90px" onclick="sortHist('tag')">Tag <span class="sort-icon" id="si-tag">↕</span></th>
+          <th style="width:90px" onclick="sortHist('fecha')">Fecha <span class="sort-icon" id="si-fecha">↕</span></th>
+          <th style="width:90px" onclick="sortHist('rating')">Rating <span class="sort-icon" id="si-rating">↕</span></th>
+          <th style="width:90px" onclick="sortHist('resultado')">Resultado <span class="sort-icon" id="si-resultado">↕</span></th>
+          <th style="width:120px">Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="hist-tbody"></tbody>
+    </table>
+  </div>
+  <div id="hist-empty" class="empty-hist" style="display:none">
+    <i class="ti ti-clipboard-list" aria-hidden="true" style="font-size:24px;display:block;margin-bottom:8px"></i>Sin registros todavía
+  </div>
 
-            for (let month = 0; month < 8; month++) {
-                let kmSum = 0;
-                let hhtSum = 0;
-                let excesosSum = 0;
+  <div id="cert-hist-wrap" class="cert-wrap">
+    <div id="cert-hist-paper" class="cert-paper"></div>
+    <div class="cert-actions">
+      <button class="cert-close" onclick="document.getElementById('cert-hist-wrap').classList.remove('show')"><i class="ti ti-x" aria-hidden="true" style="margin-right:4px"></i>Cerrar</button>
+      <button class="cert-print" onclick="printCert('cert-hist-paper')"><i class="ti ti-printer" aria-hidden="true"></i> Imprimir / PDF</button>
+    </div>
+  </div>
+  <div class="toast" id="toast-hist"></div>
+</div>
 
-                clients.forEach(function(clientName) {
-                    const client = clientsData[clientName];
-                    if (client) {
-                        kmSum += (client.kmData && client.kmData[month]) ? client.kmData[month] : 0;
-                        hhtSum += (client.hhtData && client.hhtData[month]) ? client.hhtData[month] : 0;
-                        excesosSum += (client.excesosData && client.excesosData[month]) ? client.excesosData[month] : 0;
-                    }
-                });
+<!-- PÁGINA: CERTIFICADOS -->
+<div class="page" id="page-certs">
+  <div class="hdr">
+    <div>
+      <div class="hdr-title"><i class="ti ti-certificate" aria-hidden="true" style="vertical-align:-2px;margin-right:6px"></i>Certificados emitidos</div>
+      <div class="hdr-sub">Visualizá e imprimí cualquier certificado</div>
+    </div>
+  </div>
+  <div id="certs-list"></div>
+  <div id="certs-empty" class="empty-hist">
+    <i class="ti ti-certificate" aria-hidden="true" style="font-size:24px;display:block;margin-bottom:8px"></i>Aún no hay certificados emitidos
+  </div>
 
-                clientsData.CONSOLIDADO.kmData.push(kmSum);
-                clientsData.CONSOLIDADO.hhtData.push(hhtSum);
-                clientsData.CONSOLIDADO.excesosData.push(excesosSum);
-            }
-            
-            // Calculate score and performance with new scoring system
-            clientsData.CONSOLIDADO.score = calculateScore(clientsData.CONSOLIDADO);
-            clientsData.CONSOLIDADO.performance = getPerformanceLevel(clientsData.CONSOLIDADO.score);
-            
-            console.log('CONSOLIDADO recalculado:', clientsData.CONSOLIDADO);
-        }
+  <div id="cert-certs-wrap" class="cert-wrap">
+    <div id="cert-certs-paper" class="cert-paper"></div>
+    <div class="cert-actions">
+      <button class="cert-close" onclick="document.getElementById('cert-certs-wrap').classList.remove('show')"><i class="ti ti-x" aria-hidden="true" style="margin-right:4px"></i>Cerrar</button>
+      <button class="cert-print" onclick="printCert('cert-certs-paper')"><i class="ti ti-printer" aria-hidden="true"></i> Imprimir / PDF</button>
+    </div>
+  </div>
+</div>
 
-        // Set connection status
-        function setConnectionStatus(connected) {
-            config.isConnected = connected;
-            const statusDot = document.getElementById('connection-dot');
-            const statusText = document.getElementById('connection-status');
-            const dataSourceText = document.getElementById('data-source-text');
-            
-            if (connected) {
-                statusDot.classList.remove('disconnected');
-                statusText.classList.remove('disconnected');
-                statusText.innerHTML = '<i class="fas fa-circle"></i><span>Dashboard Conectado</span>';
-                dataSourceText.textContent = 'Datos reales Google Sheets';
-            } else {
-                statusDot.classList.add('disconnected');
-                statusText.classList.add('disconnected');
-                statusText.innerHTML = '<i class="fas fa-circle"></i><span>Dashboard Desconectado</span>';
-                dataSourceText.textContent = 'Datos locales (sin conexión)';
-            }
-        }
+</div><!-- /container -->
 
-        // Show messages
-        function showError(message) {
-            hideAllBanners();
-            document.getElementById('error-message').textContent = message;
-            document.getElementById('error-banner').style.display = 'flex';
-            setTimeout(hideAllBanners, 5000);
-        }
+<script>
+var records=[], selPSI=null, selFac=1.1, selRes=null, dc=1, sortCol='id', sortDir=1;
+var pd={
+  150: {psi:150,  bar:10.3,  kg:10.56, baras:11.4,  barcu:15.5,  kgas:11.6,  kgcu:17.4,  psias:165,  psicu:225},
+  200: {psi:200,  bar:13.8,  kg:10.56, baras:15.2,  barcu:20.7,  kgas:11.6,  kgcu:17.4,  psias:220,  psicu:300},
+  300: {psi:300,  bar:20.7,  kg:21.13, baras:22.8,  barcu:31.0,  kgas:23.2,  kgcu:34.9,  psias:330,  psicu:450},
+  600: {psi:600,  bar:41.4,  kg:42.25, baras:45.5,  barcu:62.1,  kgas:46.5,  kgcu:69.7,  psias:660,  psicu:900},
+  800: {psi:800,  bar:55.2,  kg:56.34, baras:60.7,  barcu:82.7,  kgas:62.0,  kgcu:93.0,  psias:880,  psicu:1200},
+  900: {psi:900,  bar:62.1,  kg:63.38, baras:68.3,  barcu:93.1,  kgas:69.7,  kgcu:104.6, psias:990,  psicu:1350},
+  1500:{psi:1500, bar:103.4, kg:105.63,baras:113.8, barcu:155.1, kgas:116.2, kgcu:174.3, psias:1650, psicu:2250},
+  2000:{psi:2000, bar:137.9, kg:140.85,baras:151.7, barcu:206.8, kgas:154.9, kgcu:232.4, psias:2200, psicu:3000},
+  3000:{psi:3000, bar:206.8, kg:211.27,baras:227.5, barcu:310.3, kgas:232.4, kgcu:348.6, psias:3300, psicu:4500}
+};
 
-        function showSuccess(message) {
-            hideAllBanners();
-            document.getElementById('success-message').textContent = message;
-            document.getElementById('success-banner').style.display = 'flex';
-            setTimeout(hideAllBanners, 3000);
-        }
+// Base de manómetros certificados — agregar nuevos siguiendo el mismo formato
+var manometros=[
+  {marca:'BAUMER', serie:'20407/1', rango:'0 – 2900 PSI (0 – 200 BAR)', fcal:'2025-08-27', fvenc:'2026-08-27', cert:'i-kontrol Nro. 0000-021149'}
+];
 
-        function showInfo(message) {
-            hideAllBanners();
-            document.getElementById('success-message').textContent = message;
-            document.getElementById('success-banner').style.display = 'flex';
-        }
+function populateManoSelect(){
+  var sel=document.querySelector('#mano-select');
+  manometros.forEach(function(m,i){
+    var opt=document.createElement('option');
+    opt.value=i;
+    opt.textContent=m.marca+' — Serie '+m.serie;
+    sel.appendChild(opt);
+  });
+}
+populateManoSelect();
 
-        function hideAllBanners() {
-            document.getElementById('error-banner').style.display = 'none';
-            document.getElementById('success-banner').style.display = 'none';
-        }
+document.querySelector('#mano-select').addEventListener('change',function(){
+  var alertWrap=document.querySelector('#mano-alert-wrap');
+  var alertEl=document.querySelector('#mano-alert');
+  if(this.value===''){
+    ['mano-marca','mano-serie','mano-rango','mano-fcal','mano-fvenc','mano-cert'].forEach(function(id){document.querySelector('#'+id).value='';});
+    alertWrap.style.display='none';
+    return;
+  }
+  var m=manometros[parseInt(this.value,10)];
+  document.querySelector('#mano-marca').value=m.marca;
+  document.querySelector('#mano-serie').value=m.serie;
+  document.querySelector('#mano-rango').value=m.rango;
+  document.querySelector('#mano-fcal').value=m.fcal;
+  document.querySelector('#mano-fvenc').value=m.fvenc;
+  document.querySelector('#mano-cert').value=m.cert;
 
-        // Modal functions
-        function openConfigModal() {
-            document.getElementById('configModal').style.display = 'block';
-        }
+  var hoy=new Date(); hoy.setHours(0,0,0,0);
+  var venc=new Date(m.fvenc+'T00:00:00');
+  var diffDias=Math.round((venc-hoy)/(1000*60*60*24));
+  alertWrap.style.display='flex';
+  if(diffDias<0){
+    alertEl.textContent='⚠ VENCIDO desde '+venc.toLocaleDateString('es-AR');
+    alertEl.style.background='#FCEBEB'; alertEl.style.color='#791F1F';
+  }else if(diffDias<=30){
+    alertEl.textContent='⚠ Vence en '+diffDias+' día(s)';
+    alertEl.style.background='#FFF4D6'; alertEl.style.color='#8A5A00';
+  }else{
+    alertEl.textContent='✓ Calibración vigente';
+    alertEl.style.background='#EAF3DE'; alertEl.style.color='#27500A';
+  }
+});
 
-        function closeConfigModal() {
-            document.getElementById('configModal').style.display = 'none';
-        }
+function persistData(){
+  try{
+    localStorage.setItem('tecpe_records', JSON.stringify(records));
+    localStorage.setItem('tecpe_dc', String(dc));
+  }catch(e){console.error('No se pudo guardar en localStorage:',e);}
+}
 
-        // Click outside modal to close
-        window.onclick = function(event) {
-            const modal = document.getElementById('configModal');
-            if (event.target === modal) {
-                closeConfigModal();
-            }
-        }
+function loadData(){
+  try{
+    var saved=localStorage.getItem('tecpe_records');
+    var savedDc=localStorage.getItem('tecpe_dc');
+    if(saved)records=JSON.parse(saved);
+    if(savedDc)dc=parseInt(savedDc,10)||1;
+  }catch(e){console.error('No se pudo leer localStorage:',e);}
+}
 
-        // Load manual data as fallback
-        function loadManualData() {
-            const manualDataText = document.getElementById('manualData').value.trim();
-            
-            if (!manualDataText) {
-                showError('Por favor pega los datos JSON en el campo de actualización manual');
-                return;
-            }
-            
-            try {
-                const sheetsData = JSON.parse(manualDataText);
-                console.log('Cargando datos manualmente:', sheetsData);
-                
-                // Process the manual data
-                processSheetData(sheetsData);
-                
-                setConnectionStatus(true);
-                showSuccess('Datos cargados manualmente desde Google Sheets');
-                closeConfigModal();
-                updateDashboardUI();
-                
-            } catch (error) {
-                console.error('Error parsing manual data:', error);
-                showError('Error al procesar los datos: ' + error.message + '. Verifica que el JSON esté bien formateado.');
-            }
-        }
+loadData();
+document.querySelector('#fecha').value=new Date().toISOString().split('T')[0];
+updateBadges();
 
-        // Process sheet data
-        function processSheetData(sheetsData) {
-            console.log('=== DATOS COMPLETOS RECIBIDOS ===');
-            console.log(JSON.stringify(sheetsData, null, 2));
-            
-            // Update all clients with real data from sheets
-            for (const clientName of ['PAE', 'BAKER', 'NOVOMET', 'PS', 'CONSOLIDADO']) {
-                if (sheetsData[clientName]) {
-                    const sheetData = sheetsData[clientName];
-                    console.log(`=== PROCESANDO ${clientName} ===`);
-                    
-                    if (!clientsData[clientName]) {
-                        clientsData[clientName] = { color: getClientColor(clientName) };
-                    }
-                    
-                    // Update all metrics
-                    if (sheetData.kmTotales !== undefined && sheetData.kmTotales !== null) {
-                        clientsData[clientName].kmTotales = formatNumber(sheetData.kmTotales);
-                    }
-                    if (sheetData.accidentes !== undefined && sheetData.accidentes !== null) {
-                        clientsData[clientName].accidentes = sheetData.accidentes;
-                    }
-                    if (sheetData.capacitacion !== undefined && sheetData.capacitacion !== null) {
-                        clientsData[clientName].capacitacion = formatNumber(sheetData.capacitacion) + 'h';
-                    }
-                    if (sheetData.hht !== undefined && sheetData.hht !== null) {
-                        clientsData[clientName].hhtTotal = formatNumber(sheetData.hht);
-                    }
-                    if (sheetData.habPersonal !== undefined && sheetData.habPersonal !== null) {
-                        const percentage = sheetData.habPersonal > 1 ? sheetData.habPersonal : sheetData.habPersonal * 100;
-                        clientsData[clientName].habPersonal = Math.round(percentage);
-                    }
-                    if (sheetData.habVehiculos !== undefined && sheetData.habVehiculos !== null) {
-                        const percentage = sheetData.habVehiculos > 1 ? sheetData.habVehiculos : sheetData.habVehiculos * 100;
-                        clientsData[clientName].habVehiculos = Math.round(percentage);
-                    }
-                    if (sheetData.excesos !== undefined && sheetData.excesos !== null) {
-                        const excesosValue = Number(sheetData.excesos);
-                        clientsData[clientName].excesos = Math.round(excesosValue);
-                    }
-                    if (sheetData.riesgoNoAceptable !== undefined && sheetData.riesgoNoAceptable !== null) {
-                        const percentage = sheetData.riesgoNoAceptable > 1 ? sheetData.riesgoNoAceptable : sheetData.riesgoNoAceptable * 100;
-                        clientsData[clientName].riesgoNoAceptable = Math.round(percentage);
-                    }
-                    if (sheetData.hhc !== undefined && sheetData.hhc !== null) {
-                        clientsData[clientName].hhc = Number(sheetData.hhc).toFixed(1);
-                    }
-                    if (sheetData.ncInternas !== undefined && sheetData.ncInternas !== null) {
-                        clientsData[clientName].ncInternas = sheetData.ncInternas;
-                    }
-                    if (sheetData.ncExternas !== undefined && sheetData.ncExternas !== null) {
-                        clientsData[clientName].ncExternas = sheetData.ncExternas;
-                    }
-                    
-                    // Update monthly data
-                    if (sheetData.kmMensuales && Array.isArray(sheetData.kmMensuales)) {
-                        const validKmData = sheetData.kmMensuales.slice(0, 8).map(v => {
-                            const num = Number(v);
-                            return isNaN(num) ? 0 : num;
-                        });
-                        if (validKmData.some(v => v > 0)) {
-                            clientsData[clientName].kmData = validKmData;
-                        }
-                    }
-                    
-                    if (sheetData.excesosMensuales && Array.isArray(sheetData.excesosMensuales)) {
-                        const validExcesosData = sheetData.excesosMensuales.slice(0, 8).map(v => {
-                            const num = Number(v);
-                            return isNaN(num) ? 0 : num;
-                        });
-                        if (validExcesosData.some(v => v > 0)) {
-                            clientsData[clientName].excesosData = validExcesosData;
-                        }
-                    }
-                    
-                    // Generate HHT data proportional to KM data
-                    if (clientsData[clientName].kmData) {
-                        const totalKm = clientsData[clientName].kmData.reduce((sum, km) => sum + km, 0);
-                        const hhtTotal = parseFloat(clientsData[clientName].hhtTotal?.toString().replace(/[.,]/g, '')) || 1000;
-                        const ratio = totalKm > 0 ? hhtTotal / totalKm : 0.15;
-                        clientsData[clientName].hhtData = clientsData[clientName].kmData.map(km => Math.round(km * ratio));
-                    }
-                    
-                    // Calculate score with NEW SCORING SYSTEM
-                    clientsData[clientName].score = calculateScore(clientsData[clientName]);
-                    clientsData[clientName].performance = getPerformanceLevel(clientsData[clientName].score);
-                }
-            }
+document.querySelectorAll('#ptbl tbody tr').forEach(function(tr){
+  tr.addEventListener('click',function(){
+    document.querySelectorAll('#ptbl tbody tr').forEach(function(r){r.classList.remove('sel');});
+    tr.classList.add('sel'); selPSI=parseFloat(tr.dataset.psi);
+    document.querySelector('#rating').value=String(selPSI); updateCalc();
+  });
+});
 
-            // Recalculate CONSOLIDADO after updating individual clients
-            recalculateConsolidado();
-        }
+document.querySelector('#rating').addEventListener('change',function(){
+  var v=parseInt(this.value);
+  if(v&&pd[v]){
+    selPSI=v;
+    document.querySelectorAll('#ptbl tbody tr').forEach(function(r){r.classList.toggle('sel',parseInt(r.dataset.psi)===v);});
+    updateCalc();
+  }
+});
 
-        // Test connection
-        async function testConnection() {
-            try {
-                showInfo('Probando conexión con Google Apps Script...');
-                const data = await fetchSheetDataFromScript();
-                
-                if (data && Object.keys(data).length > 0) {
-                    setConnectionStatus(true);
-                    showSuccess('Conexión exitosa con Google Sheets vía Apps Script');
-                    updateDashboard();
-                } else {
-                    throw new Error('No se pudieron obtener datos del script');
-                }
-            } catch (error) {
-                setConnectionStatus(false);
-                showError('Error de conexión: ' + error.message + '. Verifica que el Google Apps Script esté implementado correctamente.');
-            }
-        }
+function updateCalc(){
+  if(!selPSI)return;
+  var d=pd[selPSI];
+  document.querySelector('#cdisp').classList.add('show');
+  document.querySelector('#cv-b').textContent=selPSI+' PSI';
+  document.querySelector('#cv-b2').textContent=selPSI+' PSI';
+  document.querySelector('#cv-r11').textContent=d.psicu+' PSI';
+  document.querySelector('#cv-bar11').textContent=String(d.barcu).replace('.',',');
+  document.querySelector('#cv-kg11').textContent=String(d.kgcu).replace('.',',');
+  document.querySelector('#cv-r15').textContent=d.psias+' PSI';
+  document.querySelector('#cv-bar15').textContent=String(d.baras).replace('.',',');
+  document.querySelector('#cv-kg15').textContent=String(d.kgas).replace('.',',');
+}
 
-        function switchClient(clientName) {
-            // Update active tab
-            document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
-            
-            // Find the correct tab and make it active
-            document.querySelectorAll('.nav-tab').forEach(tab => {
-                if (tab.textContent.trim() === clientName) {
-                    tab.classList.add('active');
-                }
-            });
-            
-            currentClient = clientName;
-            console.log('Cambiando a cliente:', clientName);
-            
-            // Force update dashboard UI including charts
-            setTimeout(() => {
-                updateDashboardUI();
-            }, 50);
-        }
+function setRes(r){
+  selRes=r;
+  document.querySelector('#btn-ap').classList.toggle('act',r==='APROBADO');
+  document.querySelector('#btn-re').classList.toggle('act',r==='RECHAZADO');
+}
 
-        function updateDashboard() {
-            const updateIcon = document.getElementById('update-icon');
-            updateIcon.classList.add('loading-spinner');
-            document.querySelector('.container').classList.add('updating');
+function gdn(){return 'RC-'+String(dc).padStart(4,'0');}
 
-            // If connected, try to update from sheets first
-            if (config.isConnected && config.spreadsheetId) {
-                updateFromSheets().then(() => {
-                    updateDashboardUI();
-                }).catch(() => {
-                    updateDashboardUI();
-                });
-            } else {
-                setTimeout(updateDashboardUI, 500);
-            }
-        }
+function saveRecord(){
+  var tag=document.querySelector('#tag').value.trim();
+  if(!tag){showToast('form','Completá el tag de la válvula');return;}
+  if(!selPSI){showToast('form','Seleccioná el rating de presión');return;}
+  if(!selRes){showToast('form','Indicá el resultado');return;}
+  if(!document.querySelector('#fecha').value){showToast('form','Ingresá la fecha');return;}
+  var rec={
+    id:gdn(), tag:tag,
+    cliente:document.querySelector('#cliente').value,
+    ubic:document.querySelector('#ubic').value,
+    marca:document.querySelector('#marca').value,
+    serie:document.querySelector('#serie').value,
+    tipo:document.querySelector('#tipo').value,
+    dn:document.querySelector('#dn').value,
+    rating:selPSI, factor:selFac,
+    presBase:(selPSI*selFac).toFixed(0),
+    presBase11:pd[selPSI]?pd[selPSI].psicu:'—',
+    presBase15:pd[selPSI]?pd[selPSI].psias:'—',
+    prealCuerpo:document.querySelector('#preal-cuerpo').value||'—',
+    prealAsiento:document.querySelector('#preal-asiento').value||'—',
+    instr:document.querySelector('#instr').value,
+    dur:document.querySelector('#dur').value||'—',
+    temp:document.querySelector('#temp').value||'—',
+    resultado:selRes,
+    obs:document.querySelector('#obs').value,
+    fecha:document.querySelector('#fecha').value,
+    oper:document.querySelector('#oper').value,
+    insp:document.querySelector('#insp').value,
+    manoMarca:document.querySelector('#mano-marca').value||'—',
+    manoSerie:document.querySelector('#mano-serie').value||'—',
+    manoRango:document.querySelector('#mano-rango').value||'—',
+    manoFcal:document.querySelector('#mano-fcal').value||'—',
+    manoFvenc:document.querySelector('#mano-fvenc').value||'—',
+    manoCert:document.querySelector('#mano-cert').value||'—'
+  };
+  records.unshift(rec); dc++;
+  persistData();
+  document.querySelector('#doc-num').textContent=gdn();
+  updateBadges();
+  buildCertHTML(rec,'cert-form-paper');
+  var wrap=document.getElementById('cert-form-wrap');
+  wrap.classList.add('show');
+  wrap.scrollIntoView({behavior:'smooth',block:'start'});
+  clearForm();
+  showToast('form','Registro '+rec.id+' guardado');
+}
 
-        function updateDashboardUI() {
-            const updateIcon = document.getElementById('update-icon');
-            
-            try {
-                const data = clientsData[currentClient];
-                
-                if (!data) {
-                    console.error('No data found for client:', currentClient);
-                    return;
-                }
-                
-                console.log('Actualizando UI para:', currentClient, data);
-                
-                // Update main info
-                document.getElementById('current-client-name').textContent = currentClient;
-                
-                // Update score circle
-                const scoreCircle = document.getElementById('score-circle');
-                const scoreValue = document.getElementById('main-score');
-                const performanceLevel = document.getElementById('performance-level');
-                
-                const progressDegrees = (data.score / 100) * 360;
-                scoreCircle.style.setProperty('--progress', progressDegrees + 'deg');
-                scoreValue.textContent = data.score;
-                performanceLevel.textContent = data.performance;
-                
-                // Update score circle color based on performance
-                let scoreColor = '#4CAF50';
-                if (data.score < 70) scoreColor = '#F44336';
-                else if (data.score < 85) scoreColor = '#FF9800';
-                
-                scoreCircle.style.background = `conic-gradient(${scoreColor} 0deg, ${scoreColor} ${progressDegrees}deg, #e0e0e0 ${progressDegrees}deg, #e0e0e0 360deg)`;
-                scoreValue.style.color = scoreColor;
-                
-                // Update main metrics
-                document.getElementById('km-totales').textContent = data.kmTotales;
-                document.getElementById('accidentes-main').textContent = data.accidentes;
-                document.getElementById('capacitacion-main').textContent = data.capacitacion;
-                
-                // Update secondary metrics
-                document.getElementById('hht-total').textContent = data.hhtTotal;
-                document.getElementById('hab-personal').textContent = data.habPersonal + '%';
-                document.getElementById('hab-vehiculos').textContent = data.habVehiculos + '%';
-                document.getElementById('excesos-total').textContent = data.excesos;
-                document.getElementById('riesgo-no-aceptable').textContent = data.riesgoNoAceptable + '%';
-                document.getElementById('hhc-value').textContent = data.hhc;
-                document.getElementById('nc-internas').textContent = data.ncInternas;
-                document.getElementById('nc-externas').textContent = data.ncExternas;
-                
-                // Update charts
-                console.log('Actualizando gráficos para:', currentClient);
-                console.log('Datos KM:', data.kmData);
-                console.log('Datos Excesos:', data.excesosData);
-                
-                setTimeout(() => {
-                    updateOperationalChart(data);
-                    updateExcessChart(data);
-                }, 100);
-                
-                updateComparativeCards();
-                
-                // Update timestamps
-                const now = new Date();
-                const timeString = now.toLocaleTimeString();
-                const dateString = now.toLocaleDateString('es-ES');
-                document.getElementById('last-update').textContent = timeString;
-                document.getElementById('footer-update').textContent = dateString + ', ' + timeString;
-                
-                // Update client data in footer
-                document.getElementById('client-data').textContent = currentClient + ': ' + data.kmTotales + ' KM | HHC: ' + data.hhc;
-                
-            } catch (error) {
-                console.error('Error updating dashboard:', error);
-                showError('Error al actualizar el dashboard');
-            } finally {
-                // Remove loading state
-                updateIcon.classList.remove('loading-spinner');
-                document.querySelector('.container').classList.remove('updating');
-            }
-        }
+function clearForm(){
+  ['tag','cliente','ubic','marca','serie','preal-cuerpo','preal-asiento','instr','dur','temp','obs','oper','insp','mano-marca','mano-serie','mano-rango','mano-fcal','mano-fvenc','mano-cert'].forEach(function(id){document.querySelector('#'+id).value='';});
+  document.querySelector('#mano-select').value='';
+  document.querySelector('#mano-alert-wrap').style.display='none';
+  document.querySelector('#tipo').value='';
+  document.querySelector('#dn').value=''; document.querySelector('#rating').value='';
+  document.querySelector('#fecha').value=new Date().toISOString().split('T')[0];
+  document.querySelectorAll('#ptbl tbody tr').forEach(function(r){r.classList.remove('sel');});
+  document.querySelectorAll('.fbtn').forEach(function(b){b.classList.remove('act');if(b.dataset.f==='1.1')b.classList.add('act');});
+  document.querySelector('#cdisp').classList.remove('show');
+  selPSI=null; selFac=1.1; selRes=null;
+  document.querySelector('#btn-ap').classList.remove('act');
+  document.querySelector('#btn-re').classList.remove('act');
+}
 
-        function updateOperationalChart(data) {
-            console.log('=== INICIANDO updateOperationalChart ===');
-            console.log('Datos recibidos:', data);
-            
-            const canvas = document.getElementById('operationalChart');
-            if (!canvas) {
-                console.error('Canvas operationalChart no encontrado');
-                return;
-            }
-            
-            const ctx = canvas.getContext('2d');
-            
-            // Destroy existing chart
-            if (charts.operational) {
-                console.log('Destruyendo gráfico operacional existente');
-                charts.operational.destroy();
-                charts.operational = null;
-            }
-            
-            // Force canvas reset
-            canvas.width = canvas.offsetWidth;
-            canvas.height = 280;
-            
-            // Validate data
-            if (!data.kmData || !Array.isArray(data.kmData) || data.kmData.length === 0) {
-                console.error('Datos de KM inválidos:', data.kmData);
-                return;
-            }
-            
-            if (!data.hhtData || !Array.isArray(data.hhtData) || data.hhtData.length === 0) {
-                console.error('Datos de HHT inválidos:', data.hhtData);
-                return;
-            }
+function updateBadges(){
+  var n=records.length;
+  ['hist-count','cert-count'].forEach(function(id){
+    var el=document.getElementById(id);
+    el.textContent=n; el.classList.toggle('show',n>0);
+  });
+}
 
-            console.log('Creando nuevo gráfico operacional...');
-            
-            try {
-                charts.operational = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: months,
-                        datasets: [{
-                            label: 'KM',
-                            data: data.kmData.map(function(v) { return Math.round(v / 1000); }),
-                            backgroundColor: 'rgba(33, 150, 243, 0.8)',
-                            borderColor: '#2196F3',
-                            borderWidth: 1,
-                            borderRadius: 4,
-                            yAxisID: 'y',
-                            barThickness: 25
-                        }, {
-                            label: 'HHT',
-                            data: data.hhtData.map(function(v) { return Math.round(v / 1000); }),
-                            type: 'line',
-                            borderColor: '#FF9800',
-                            backgroundColor: 'rgba(255, 152, 0, 0.1)',
-                            borderWidth: 3,
-                            fill: false,
-                            tension: 0.4,
-                            pointBackgroundColor: '#FF9800',
-                            pointBorderColor: '#FF9800',
-                            pointRadius: 5,
-                            pointHoverRadius: 7,
-                            yAxisID: 'y1'
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        layout: {
-                            padding: {
-                                top: 10,
-                                bottom: 10
-                            }
-                        },
-                        plugins: {
-                            legend: {
-                                position: 'bottom',
-                                labels: {
-                                    usePointStyle: true,
-                                    padding: 20,
-                                    font: {
-                                        size: 12
-                                    }
-                                }
-                            }
-                        },
-                        scales: {
-                            y: {
-                                type: 'linear',
-                                display: true,
-                                position: 'left',
-                                grid: {
-                                    color: 'rgba(0,0,0,0.1)',
-                                    drawBorder: false
-                                },
-                                ticks: {
-                                    font: {
-                                        size: 11
-                                    },
-                                    callback: function(value) {
-                                        return value + 'K';
-                                    }
-                                },
-                                title: {
-                                    display: true,
-                                    text: 'KM (miles)',
-                                    font: {
-                                        size: 11
-                                    }
-                                }
-                            },
-                            y1: {
-                                type: 'linear',
-                                display: true,
-                                position: 'right',
-                                grid: {
-                                    drawOnChartArea: false,
-                                },
-                                ticks: {
-                                    font: {
-                                        size: 11
-                                    },
-                                    callback: function(value) {
-                                        return value + 'K';
-                                    }
-                                },
-                                title: {
-                                    display: true,
-                                    text: 'HHT (miles)',
-                                    font: {
-                                        size: 11
-                                    }
-                                }
-                            },
-                            x: {
-                                grid: {
-                                    color: 'rgba(0,0,0,0.1)',
-                                    drawBorder: false
-                                },
-                                ticks: {
-                                    font: {
-                                        size: 11
-                                    }
-                                }
-                            }
-                        },
-                        interaction: {
-                            mode: 'index',
-                            intersect: false,
-                        }
-                    }
-                });
-                
-                console.log('Gráfico operacional creado exitosamente');
-                
-            } catch (error) {
-                console.error('Error creando gráfico operacional:', error);
-            }
-        }
+function goPage(id){
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
+  document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});
+  document.getElementById('page-'+id).classList.add('active');
+  document.getElementById('nb-'+id).classList.add('active');
+  if(id==='hist'){renderHist();renderKPI();}
+  if(id==='certs'){renderCertsList();}
+}
 
-        function updateExcessChart(data) {
-            console.log('=== INICIANDO updateExcessChart ===');
-            console.log('Datos recibidos:', data);
-            
-            const canvas = document.getElementById('excessChart');
-            if (!canvas) {
-                console.error('Canvas excessChart no encontrado');
-                return;
-            }
-            
-            const ctx = canvas.getContext('2d');
-            
-            // Destroy existing chart
-            if (charts.excess) {
-                console.log('Destruyendo gráfico de excesos existente');
-                charts.excess.destroy();
-                charts.excess = null;
-            }
-            
-            // Force canvas reset
-            canvas.width = canvas.offsetWidth;
-            canvas.height = 280;
-            
-            // Validate data
-            if (!data.excesosData || !Array.isArray(data.excesosData) || data.excesosData.length === 0) {
-                console.error('Datos de excesos inválidos:', data.excesosData);
-                return;
-            }
+function renderKPI(){
+  var ok=records.filter(function(r){return r.resultado==='APROBADO';}).length;
+  var fail=records.filter(function(r){return r.resultado==='RECHAZADO';}).length;
+  document.getElementById('kpi-total').textContent=records.length;
+  document.getElementById('kpi-ok').textContent=ok;
+  document.getElementById('kpi-fail').textContent=fail;
+  document.getElementById('kpi-rate').textContent=records.length?Math.round(ok/records.length*100)+'%':'—';
+}
 
-            console.log('Creando nuevo gráfico de excesos...');
-            
-            try {
-                charts.excess = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: months,
-                        datasets: [{
-                            label: 'Excesos',
-                            data: data.excesosData,
-                            backgroundColor: 'rgba(255, 152, 0, 0.8)',
-                            borderColor: '#FF9800',
-                            borderWidth: 1,
-                            borderRadius: 4,
-                            barThickness: 35
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        layout: {
-                            padding: {
-                                top: 10,
-                                bottom: 10
-                            }
-                        },
-                        plugins: {
-                            legend: {
-                                display: false
-                            }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                grid: {
-                                    color: 'rgba(0,0,0,0.1)',
-                                    drawBorder: false
-                                },
-                                ticks: {
-                                    font: {
-                                        size: 11
-                                    }
-                                }
-                            },
-                            x: {
-                                grid: {
-                                    color: 'rgba(0,0,0,0.1)',
-                                    drawBorder: false
-                                },
-                                ticks: {
-                                    font: {
-                                        size: 11
-                                    }
-                                }
-                            }
-                        }
-                    }
-                });
-                
-                console.log('Gráfico de excesos creado exitosamente');
-                
-            } catch (error) {
-                console.error('Error creando gráfico de excesos:', error);
-            }
-        }
+function renderHist(){
+  var search=document.getElementById('f-search').value.toLowerCase();
+  var fres=document.getElementById('f-result').value;
+  var frat=document.getElementById('f-rating').value;
+  var data=records.slice();
+  if(search)data=data.filter(function(r){return (r.tag+r.oper+r.ubic).toLowerCase().includes(search);});
+  if(fres)data=data.filter(function(r){return r.resultado===fres;});
+  if(frat)data=data.filter(function(r){return String(r.rating)===frat;});
+  data.sort(function(a,b){
+    var av=a[sortCol],bv=b[sortCol];
+    if(typeof av==='number')return (av-bv)*sortDir;
+    return String(av).localeCompare(String(bv))*sortDir;
+  });
+  var tbody=document.getElementById('hist-tbody');
+  var empty=document.getElementById('hist-empty');
+  var csv=document.getElementById('btn-csv');
+  if(!data.length){tbody.innerHTML='';empty.style.display='block';csv.style.display='none';return;}
+  empty.style.display='none'; csv.style.display='flex';
+  tbody.innerHTML=data.map(function(r){
+    var fd=r.fecha?new Date(r.fecha+'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'}):'-';
+    var idx=records.indexOf(r);
+    return '<tr>'
+      +'<td style="font-weight:500">'+r.id+'</td>'
+      +'<td>'+r.tag+'</td>'
+      +'<td>'+fd+'</td>'
+      +'<td>'+r.rating+' PSI</td>'
+      +'<td><span class="bdg '+(r.resultado==='APROBADO'?'bok':'bfl')+'">'+r.resultado+'</span></td>'
+      +'<td><div class="act-btns">'
+      +'<button class="ico-btn" onclick="showCertInPage(\'hist\',\''+r.id+'\')" title="Ver certificado"><i class="ti ti-certificate" aria-hidden="true"></i> Cert.</button>'
+      +'<button class="ico-btn danger" onclick="deleteRecord(\''+r.id+'\')" title="Eliminar"><i class="ti ti-trash" aria-hidden="true"></i></button>'
+      +'</div></td></tr>';
+  }).join('');
+}
 
-        function updateComparativeCards() {
-            const container = document.getElementById('comparative-cards');
-            container.innerHTML = '';
+function sortHist(col){
+  if(sortCol===col)sortDir*=-1; else{sortCol=col;sortDir=1;}
+  document.querySelectorAll('[id^="si-"]').forEach(function(el){el.textContent='↕';});
+  var si=document.getElementById('si-'+col);
+  if(si)si.textContent=sortDir===1?'↑':'↓';
+  renderHist();
+}
 
-            // Sort clients by score (excluding CONSOLIDADO for sorting)
-            const sortedClients = Object.entries(clientsData)
-                .filter(function(entry) { return entry[0] !== 'CONSOLIDADO'; })
-                .sort(function(a, b) { return b[1].score - a[1].score; });
+function deleteRecord(id){
+  if(!confirm('¿Eliminar el registro '+id+'?'))return;
+  records=records.filter(function(r){return r.id!==id;});
+  persistData();
+  updateBadges(); renderHist(); renderKPI();
+}
 
-            // Add consolidado first
-            if (clientsData.CONSOLIDADO) {
-                const consolidadoCard = createComparativeCard('CONSOLIDADO', clientsData.CONSOLIDADO, currentClient === 'CONSOLIDADO');
-                container.appendChild(consolidadoCard);
-            }
+function renderCertsList(){
+  var list=document.getElementById('certs-list');
+  var empty=document.getElementById('certs-empty');
+  if(!records.length){list.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  list.innerHTML=records.map(function(r){
+    var pass=r.resultado==='APROBADO';
+    return '<div class="certs-card">'
+      +'<div class="certs-avatar '+(pass?'ok':'fail')+'"><i class="ti ti-'+(pass?'check':'x')+'" aria-hidden="true"></i></div>'
+      +'<div class="certs-info"><p>'+r.id+' — '+r.tag+'</p><span>'+(r.fecha||'')+' · '+r.rating+' PSI × '+r.factor.toFixed(1).replace('.',',')+' · '+(r.oper||'—')+'</span></div>'
+      +'<div class="certs-btns">'
+      +'<button class="ico-btn" onclick="showCertInPage(\'certs\',\''+r.id+'\')"><i class="ti ti-eye" aria-hidden="true"></i> Ver</button>'
+      +'<button class="ico-btn" onclick="showAndPrint(\''+r.id+'\')"><i class="ti ti-printer" aria-hidden="true"></i> Imprimir</button>'
+      +'<button class="ico-btn" onclick="exportExcelCert(\''+r.id+'\')"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i> Excel</button>'
+      +'</div></div>';
+  }).join('');
+}
 
-            // Add other clients
-            sortedClients.forEach(function(entry) {
-                const name = entry[0];
-                const data = entry[1];
-                const card = createComparativeCard(name, data, name === currentClient);
-                container.appendChild(card);
-            });
-        }
+function showCertInPage(page,id){
+  var r=records.find(function(x){return x.id===id;});
+  if(!r)return;
+  buildCertHTML(r,'cert-'+page+'-paper');
+  var wrap=document.getElementById('cert-'+page+'-wrap');
+  wrap.classList.add('show');
+  wrap.scrollIntoView({behavior:'smooth',block:'start'});
+}
 
-        function createComparativeCard(name, data, isCurrent) {
-            const card = document.createElement('div');
-            card.className = 'comparative-card' + (isCurrent ? ' current' : '');
-            
-            let performanceClass = 'excellent';
-            if (data.score < 85) performanceClass = 'good';
-            if (data.score < 70) performanceClass = 'warning';
+function showAndPrint(id){
+  var r=records.find(function(x){return x.id===id;});
+  if(!r)return;
+  buildCertHTML(r,'cert-certs-paper');
+  printCert('cert-certs-paper');
+}
 
-            let iconClass = 'fas fa-truck';
-            if (name === 'BAKER') iconClass = 'fas fa-shipping-fast';
-            if (name === 'NOVOMET') iconClass = 'fas fa-route';
-            if (name === 'PS') iconClass = 'fas fa-truck-pickup';
-            if (name === 'CONSOLIDADO') iconClass = 'fas fa-chart-pie';
+function buildCertHTML(r,targetId){
+  var fd=r.fecha?new Date(r.fecha+'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'long',year:'numeric'}):'-';
+  var pass=r.resultado==='APROBADO';
+  var obsHTML=r.obs?'<div class="cert-obs-blk"><strong>Observaciones:</strong> '+r.obs+'</div>':'';
+  var html='<div class="'+(pass?'pass-cert':'fail-cert')+'">'
+    +'<div class="cert-hdr">'
+    +'<div style="display:flex;align-items:center;gap:10px"><img src="data:image/png;base64,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" alt="TECPE" style="height:44px;width:auto;object-fit:contain"/><div><div class="cert-logo">TECPE S.A.<span>Tecnología Petrolera</span></div></div></div>'
+    +'<div class="cert-idblock"><small>Certificado N°</small><strong>'+r.id+'</strong></div>'
+    +'</div>'
+    +'<div class="cert-title-bar">Certificado de prueba de presión — válvula de control</div>'
+    +'<div class="cert-band '+(pass?'pass':'fail')+'">'+(pass?'APROBADO — Prueba de presión satisfactoria':'RECHAZADO — Prueba no satisfactoria')+'</div>'
+    +'<div class="cert-grid">'
+    +'<div class="cc"><small>Tag / válvula</small><strong>'+(r.tag||'—')+'</strong></div>'
+    +'<div class="cc"><small>Cliente</small><strong>'+(r.cliente||'—')+'</strong></div>'
+    +'<div class="cc"><small>Ubicación</small><strong>'+(r.ubic||'—')+'</strong></div>'
+    +'<div class="cc"><small>Marca</small><strong>'+(r.marca||'—')+'</strong></div>'
+    +'<div class="cc"><small>Serie</small><strong>'+(r.serie||'—')+'</strong></div>'
+    +'<div class="cc"><small>Tipo de válvula</small><strong>'+(r.tipo||'—')+'</strong></div>'
+    +'<div class="cc"><small>Diámetro</small><strong>'+(r.dn||'—')+'</strong></div>'
+    +'<div class="cc"><small>Rating de diseño</small><strong>'+r.rating+' PSI</strong></div>'
+    +'<div class="cc"><small>Fecha de prueba</small><strong>'+fd+'</strong></div>'
+    +'<div class="cc"><small>Duración real</small><strong>'+(r.dur!=='—'?r.dur+' s':r.dur)+'</strong></div>'
+    +'<div class="cc"><small>Instrumento</small><strong>'+(r.instr||'—')+'</strong></div>'
+    +'<div class="cc"><small>Temperatura</small><strong>'+(r.temp!=='—'?r.temp+' °C':r.temp)+'</strong></div>'
+    +'</div>'
+    +'<div class="pres-blk"><small>Presiones de prueba aplicadas</small>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">'
+    // — CUERPO
+    +'<div style="background:#fff;border:1px solid #e5e5e5;border-radius:6px;padding:10px">'
+    +'<div style="font-size:10px;font-weight:700;color:#1a7abf;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;border-bottom:1px solid #e5e5e5;padding-bottom:5px">Prueba de cuerpo × 1,5</div>'
+    +'<div style="display:flex;justify-content:space-between;margin-bottom:5px"><span style="font-size:10px;color:#999;text-transform:uppercase">Requerida</span><strong style="font-size:13px;color:#111">'+r.presBase11+' PSI</strong></div>'
+    +'<div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="font-size:10px;color:#999;text-transform:uppercase">Lectura real</span><strong style="font-size:13px;color:#111">'+r.prealCuerpo+' PSI</strong></div>'
+    +'<div style="text-align:center;padding:5px;border-radius:4px;font-size:11px;font-weight:700;background:'+(r.prealCuerpo!=='—'&&parseFloat(r.prealCuerpo)>=parseFloat(r.presBase11)?'#EAF3DE':'#FCEBEB')+';color:'+(r.prealCuerpo!=='—'&&parseFloat(r.prealCuerpo)>=parseFloat(r.presBase11)?'#27500A':'#791F1F')+'">'+( r.prealCuerpo!=='—'&&parseFloat(r.prealCuerpo)>=parseFloat(r.presBase11)?'✓ CONFORME':'✗ NO CONFORME')+'</div>'
+    +'</div>'
+    // — ASIENTO
+    +'<div style="background:#fff;border:1px solid #e5e5e5;border-radius:6px;padding:10px">'
+    +'<div style="font-size:10px;font-weight:700;color:#1a7abf;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;border-bottom:1px solid #e5e5e5;padding-bottom:5px">Prueba de asiento × 1,1</div>'
+    +'<div style="display:flex;justify-content:space-between;margin-bottom:5px"><span style="font-size:10px;color:#999;text-transform:uppercase">Requerida</span><strong style="font-size:13px;color:#111">'+r.presBase15+' PSI</strong></div>'
+    +'<div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="font-size:10px;color:#999;text-transform:uppercase">Lectura real</span><strong style="font-size:13px;color:#111">'+r.prealAsiento+' PSI</strong></div>'
+    +'<div style="text-align:center;padding:5px;border-radius:4px;font-size:11px;font-weight:700;background:'+(r.prealAsiento!=='—'&&parseFloat(r.prealAsiento)>=parseFloat(r.presBase15)?'#EAF3DE':'#FCEBEB')+';color:'+(r.prealAsiento!=='—'&&parseFloat(r.prealAsiento)>=parseFloat(r.presBase15)?'#27500A':'#791F1F')+'">'+( r.prealAsiento!=='—'&&parseFloat(r.prealAsiento)>=parseFloat(r.presBase15)?'✓ CONFORME':'✗ NO CONFORME')+'</div>'
+    +'</div>'
+    +'</div></div>'
+    +obsHTML
+    +'<div class="pres-blk" style="margin-bottom:1.25rem"><small>Manómetro utilizado para calibrar</small>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px">'
+    +'<div style="text-align:center"><p style="font-size:10px;color:#999;text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px">Marca / modelo</p><strong style="font-size:12px;font-weight:600;color:#111;display:block">'+(r.manoMarca||'—')+'</strong></div>'
+    +'<div style="text-align:center"><p style="font-size:10px;color:#999;text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px">Nº de serie</p><strong style="font-size:12px;font-weight:600;color:#111;display:block">'+(r.manoSerie||'—')+'</strong></div>'
+    +'<div style="text-align:center"><p style="font-size:10px;color:#999;text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px">Rango (PSI)</p><strong style="font-size:12px;font-weight:600;color:#111;display:block">'+(r.manoRango||'—')+'</strong></div>'
+    +'<div style="text-align:center"><p style="font-size:10px;color:#999;text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px">Últ. calibración</p><strong style="font-size:12px;font-weight:600;color:#111;display:block">'+(r.manoFcal&&r.manoFcal!=='—'?new Date(r.manoFcal+'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'}):r.manoFcal||'—')+'</strong></div>'
+    +'<div style="text-align:center"><p style="font-size:10px;color:#999;text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px">Vto. calibración</p><strong style="font-size:12px;font-weight:600;color:#111;display:block">'+(r.manoFvenc&&r.manoFvenc!=='—'?new Date(r.manoFvenc+'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'}):r.manoFvenc||'—')+'</strong></div>'
+    +'<div style="text-align:center"><p style="font-size:10px;color:#999;text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px">Certificado / trazab.</p><strong style="font-size:12px;font-weight:600;color:#111;display:block">'+(r.manoCert||'—')+'</strong></div>'
+    +'</div></div>'
+    +'<div class="cert-sigs">'
+    +'<div class="sig-blk"><div class="sig-line"></div><p>'+(r.oper||'Operador / Técnico')+'</p><span>Firma y aclaración</span></div>'
+    +'<div class="sig-blk"><div class="sig-line"></div><p>'+(r.insp||'Inspector / Supervisor')+'</p><span>Firma y aclaración</span></div>'
+    +'</div>'
+    +'<div class="cert-foot">TECPE S.A. — Tecnología Petrolera · Comodoro Rivadavia, Chubut · Este certificado acredita la prueba realizada bajo condiciones controladas.</div>'
+    +'<div class="cert-qr-block">'
+    +'<div class="cert-qr-info"><strong>Verificación del certificado</strong>Nº: '+r.id+'<br>Válvula: '+r.tag+'<br>Fecha: '+fd+'<br>Resultado: '+r.resultado+'<br>Presión de prueba: '+r.presBase+' PSI</div>'
+    +'<div class="cert-qr-box" id="qr-'+r.id+'"></div>'
+    +'</div>'
+    +'</div>';
+  document.getElementById(targetId).innerHTML=html;
+  // Generate QR code
+  var qrData = 'TECPE S.A. | Cert: '+r.id+' | Tag: '+r.tag+' | Resultado: '+r.resultado+' | Presión: '+r.presBase+' PSI | Fecha: '+fd;
+  try { new QRCode(document.getElementById('qr-'+r.id), { text: qrData, width: 80, height: 80, colorDark:'#1a1a1a', colorLight:'#ffffff', correctLevel: QRCode.CorrectLevel.M }); } catch(e){}
+  document.getElementById(targetId).className='cert-paper';
+}
 
-            card.innerHTML = '<div class="card-header">' +
-                '<div class="card-icon" style="background: ' + data.color + '">' +
-                '<i class="' + iconClass + '"></i>' +
-                '</div>' +
-                '<div class="card-info">' +
-                '<h3>' + name + '</h3>' +
-                '<span class="performance-badge ' + performanceClass + '">' + data.performance + '</span>' +
-                '</div>' +
-                '</div>' +
-                '<div class="card-score" style="color: ' + data.color + '">' +
-                data.score + '<span style="font-size: 16px; color: #666;">Score</span>' +
-                '</div>' +
-                '<div class="card-metrics">' +
-                '<div class="card-metric">' +
-                '<div class="card-metric-label">KM Totales</div>' +
-                '<div class="card-metric-value">' + data.kmTotales + '</div>' +
-                '</div>' +
-                '<div class="card-metric">' +
-                '<div class="card-metric-label">HHC</div>' +
-                '<div class="card-metric-value">' + data.hhc + '</div>' +
-                '</div>' +
-                '</div>';
+function printCert(paperId){
+  var content=document.getElementById(paperId).innerHTML;
+  var w=window.open('','_blank','width=820,height=960');
+  // Clone QR canvas to img before printing
+  var qrCanvases = document.getElementById(paperId).querySelectorAll('canvas');
+  qrCanvases.forEach(function(c){var img=new Image();img.src=c.toDataURL();img.style.width=c.style.width||'80px';img.style.height=c.style.height||'80px';c.parentNode.replaceChild(img,c);});
+  w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Certificado TECPE</title><style>'
+    +'*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;background:#f0f0f0;padding:20px}'
+    +'.cert-paper{background:#fff;padding:32px;max-width:680px;margin:0 auto;color:#1a1a1a}'
+    +'.pass-cert{border-top:4px solid #1D9E75}.fail-cert{border-top:4px solid #E24B4A}'
+    +'.cert-hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.25rem;padding-bottom:1rem;border-bottom:1px solid #e5e5e5}'
+    +'.cert-logo{font-size:17px;font-weight:700;color:#111}.cert-logo span{display:block;font-size:10px;color:#888;font-weight:400;text-transform:uppercase;letter-spacing:.06em;margin-top:2px}'
+    +'.cert-idblock{text-align:right}.cert-idblock small{font-size:10px;color:#888;text-transform:uppercase;display:block}.cert-idblock strong{font-size:21px;font-weight:700;color:#111}'
+    +'.cert-title-bar{text-align:center;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:9px 0;border-bottom:1px solid #e5e5e5;margin-bottom:1.25rem;color:#333}'
+    +'.cert-band{text-align:center;padding:13px;border-radius:6px;margin-bottom:1.25rem;font-size:18px;font-weight:700;letter-spacing:.05em}'
+    +'.cert-band.pass{background:#EAF3DE;color:#27500A}.cert-band.fail{background:#FCEBEB;color:#791F1F}'
+    +'.cert-grid{display:grid;grid-template-columns:1fr 1fr;border:1px solid #e5e5e5;border-radius:6px;overflow:hidden;margin-bottom:1.25rem}'
+    +'.cc{padding:8px 11px;border-bottom:1px solid #e5e5e5;border-right:1px solid #e5e5e5}'
+    +'.cc:nth-child(2n){border-right:none}.cc:nth-last-child(-n+2){border-bottom:none}'
+    +'.cc small{font-size:10px;color:#999;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:2px}'
+    +'.cc strong{font-size:13px;font-weight:600;color:#111}'
+    +'.pres-blk{background:#f6f6f6;border-radius:6px;padding:11px 14px;margin-bottom:1.25rem}'
+    +'.pres-blk>small{font-size:10px;color:#999;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:8px}'
+    +'.pres-row{display:flex;gap:12px}.pres-item{flex:1;text-align:center}'
+    +'.pres-item p{font-size:10px;color:#999;text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px}'
+    +'.pres-item strong{font-size:15px;font-weight:700;color:#111;display:block}.pres-item span{font-size:10px;color:#999}'
+    +'.cert-obs-blk{background:#fffbe6;border-left:3px solid #EF9F27;padding:9px 11px;margin-bottom:1.25rem;font-size:12px;color:#412402}'
+    +'.cert-sigs{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid #e5e5e5}'
+    +'.sig-blk{text-align:center}.sig-line{height:36px;border-bottom:1px solid #aaa;margin-bottom:6px}'
+    +'.sig-blk p{font-size:12px;color:#444;font-weight:600}.sig-blk span{font-size:10px;color:#999}'
+    +'.cert-foot{text-align:center;font-size:10px;color:#bbb;margin-top:1.25rem;padding-top:1rem;border-top:1px solid #eee}'
+    +'@media print{body{background:#fff;padding:0}.cert-paper{max-width:100%}}'
+    +'.cert-qr-block{display:flex;align-items:flex-end;justify-content:space-between;margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid #e5e5e5;gap:16px}'
+    +'.cert-qr-info{flex:1;font-size:10px;color:#999;line-height:1.6}'
+    +'.cert-qr-info strong{color:#444;font-size:11px;display:block;margin-bottom:4px}'
+    +'.cert-qr-box{flex-shrink:0}'
+    +'</style></head><body><div class="cert-paper">'+content+'</div></body></html>');
+  w.document.close();
+  setTimeout(function(){w.print();},400);
+}
 
-            // Add click handler
-            card.addEventListener('click', function() {
-                switchClient(name);
-            });
+function showToast(zone,msg){
+  var t=document.getElementById('toast-'+zone);
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(function(){t.classList.remove('show');},2500);
+}
 
-            return card;
-        }
+function buildExcelRow(r){
+  var fd=r.fecha?new Date(r.fecha+'T12:00:00').toLocaleDateString('es-AR'):'—';
+  var fcal=r.manoFcal&&r.manoFcal!=='—'?new Date(r.manoFcal+'T12:00:00').toLocaleDateString('es-AR'):'—';
+  var fvenc=r.manoFvenc&&r.manoFvenc!=='—'?new Date(r.manoFvenc+'T12:00:00').toLocaleDateString('es-AR'):'—';
+  return {
+    'N° Certificado':r.id,
+    'Fecha':fd,
+    'Tag / N° válvula':r.tag||'—',
+    'Cliente':r.cliente||'—',
+    'Ubicación':r.ubic||'—',
+    'Marca / fabricante':r.marca||'—',
+    'Serie':r.serie||'—',
+    'Tipo de válvula':r.tipo||'—',
+    'Diámetro':r.dn||'—',
+    'Rating (PSI)':r.rating||'—',
+    'Presión base (BAR)':r.rating&&pd[r.rating]?pd[r.rating].bar:'—',
+    'Presión base (KG/CM²)':r.rating&&pd[r.rating]?pd[r.rating].kg:'—',
+    'Presión requerida cuerpo ×1,5 (PSI)':r.presBase11||'—',
+    'Presión requerida cuerpo (BAR)':r.rating&&pd[r.rating]?pd[r.rating].barcu:'—',
+    'Presión requerida cuerpo (KG/CM²)':r.rating&&pd[r.rating]?pd[r.rating].kgcu:'—',
+    'Lectura manómetro cuerpo (PSI)':r.prealCuerpo||'—',
+    'Presión requerida asiento ×1,1 (PSI)':r.presBase15||'—',
+    'Presión requerida asiento (BAR)':r.rating&&pd[r.rating]?pd[r.rating].baras:'—',
+    'Presión requerida asiento (KG/CM²)':r.rating&&pd[r.rating]?pd[r.rating].kgas:'—',
+    'Lectura manómetro asiento (PSI)':r.prealAsiento||'—',
+    'Instrumento de medición':r.instr||'—',
+    'Duración de prueba (s)':r.dur||'—',
+    'Temperatura (°C)':r.temp||'—',
+    'Resultado':r.resultado||'—',
+    'Observaciones':r.obs||'—',
+    'Manómetro — Marca/modelo':r.manoMarca||'—',
+    'Manómetro — N° de serie':r.manoSerie||'—',
+    'Manómetro — Rango':r.manoRango||'—',
+    'Manómetro — Fecha calibración':fcal,
+    'Manómetro — Vencimiento calibración':fvenc,
+    'Manómetro — Certificado/trazabilidad':r.manoCert||'—',
+    'Operador':r.oper||'—',
+    'Inspector / Supervisor':r.insp||'—'
+  };
+}
 
-        // Initialize dashboard
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('Dashboard iniciado');
-            console.log('Script URL configurada:', config.scriptUrl);
-            
-            // Recalculate all scores with new scoring system
-            for (const clientName in clientsData) {
-                clientsData[clientName].score = calculateScore(clientsData[clientName]);
-                clientsData[clientName].performance = getPerformanceLevel(clientsData[clientName].score);
-            }
-            
-            recalculateConsolidado();
-            setConnectionStatus(false);
-            updateDashboardUI();
-            
-            // Pre-fill config
-            document.getElementById('spreadsheetId').value = config.spreadsheetId;
-            
-            // Test connection automatically
-            setTimeout(function() {
-                console.log('Probando conexión automática...');
-                testConnection();
-            }, 1000);
-        });
+function exportExcelHistorial(){
+  if(!records.length){alert('No hay certificados generados todavía.');return;}
+  var rows=records.map(buildExcelRow);
+  var ws=XLSX.utils.json_to_sheet(rows);
+  ws['!cols']=Object.keys(rows[0]).map(function(){return {wch:20};});
+  var wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Certificados');
+  XLSX.writeFile(wb,'certificados_calibracion_TECPE.xlsx');
+}
 
-        // Add keyboard shortcuts
-        document.addEventListener('keydown', function(e) {
-            if (e.ctrlKey && e.key === 'r') {
-                e.preventDefault();
-                updateDashboard();
-            }
-        });
-    </script>
+function exportExcelCert(id){
+  var r=records.find(function(x){return x.id===id;});
+  if(!r)return;
+  var rows=[buildExcelRow(r)];
+  var ws=XLSX.utils.json_to_sheet(rows);
+  ws['!cols']=Object.keys(rows[0]).map(function(){return {wch:20};});
+  var wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Certificado');
+  XLSX.writeFile(wb,'certificado_'+r.id+'.xlsx');
+}
+</script>
 </body>
 </html>
